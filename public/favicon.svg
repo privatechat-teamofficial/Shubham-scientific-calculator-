@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Radiant gold-to-amber gradient matching calculator SHIFT & brand logo -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+
+    <!-- Inner ambient shine -->
+    <radialGradient id="goldGlow" cx="30%" cy="20%" r="80%">
+      <stop offset="0%" stop-color="#fef08a" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#d97706" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000000" flood-opacity="0.8"/>
+    </filter>
+  </defs>
+
+  <!-- Deep dark rounded container for contrast when rendered as favicon/icon -->
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="#000000" />
+
+  <!-- Main Golden Rounded Badge (identical to top-left header logo) -->
+  <rect x="28" y="28" width="456" height="456" rx="98" fill="url(#goldGrad)" stroke="#fef08a" stroke-width="8" stroke-opacity="0.6" filter="url(#softShadow)"/>
+  <rect x="28" y="28" width="456" height="456" rx="98" fill="url(#goldGlow)"/>
+
+  <!-- Inner subtle border ring -->
+  <rect x="42" y="42" width="428" height="428" rx="84" fill="none" stroke="#ffffff" stroke-width="3" stroke-opacity="0.25"/>
+
+  <!-- Large, Bold, Authentic Black Greek Capital Sigma Σ -->
+  <text x="50%" y="53%" text-anchor="middle" dominant-baseline="central"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+        font-weight="900" font-size="340"
+        fill="#000000" letter-spacing="-2">Σ</text>
+</svg>

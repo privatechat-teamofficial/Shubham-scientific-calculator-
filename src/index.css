@@ -1,0 +1,238 @@
+@import "tailwindcss";
+
+@layer theme {
+  :root, :host {
+    --font-sans: "Oryno", "Plus Jakarta Sans", "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --font-oryno: "Oryno", "Plus Jakarta Sans", "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+
+    /* CalcES transitions & easings */
+    --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-in: cubic-bezier(0.4, 0, 1, 1);
+    --ease-out: cubic-bezier(0, 0, 0.2, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-ui: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --tera-duration-fast: 0.15s;
+    --tera-duration-base: 0.2s;
+  }
+}
+
+@font-face {
+  font-family: "Oryno";
+  src: url("/fonts/Oryno-Regular.otf") format("opentype"),
+       local("Oryno Regular"),
+       local("Oryno");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Oryno";
+  src: url("/fonts/Oryno-Bold.ttf") format("truetype"),
+       url("/fonts/Oryno-Bold.otf") format("opentype"),
+       local("Oryno Black Black"),
+       local("Oryno Bold"),
+       local("Oryno-Bold"),
+       local("Oryno");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Oryno Bold";
+  src: url("/fonts/Oryno-Bold.ttf") format("truetype"),
+       url("/fonts/Oryno-Bold.otf") format("opentype"),
+       local("Oryno Black Black"),
+       local("Oryno Bold"),
+       local("Oryno-Bold"),
+       local("Oryno");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Oryno Bold";
+  src: url("/fonts/Oryno-Bold.ttf") format("truetype"),
+       url("/fonts/Oryno-Bold.otf") format("opentype"),
+       local("Oryno Black Black"),
+       local("Oryno Bold"),
+       local("Oryno-Bold"),
+       local("Oryno");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  font-family: var(--font-oryno);
+  --tw-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --tw-duration: 0.15s;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: #000000;
+  color: #f1f5f9;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+body, button, input, select, textarea {
+  font-family: var(--font-oryno);
+}
+
+/* Oryno font styling for calculator entering digits (moderate/medium weight to differentiate from answer) */
+.font-oryno-input {
+  font-family: "Oryno", var(--font-oryno) !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.01em;
+}
+
+/* Oryno Bold font styling for calculator answer/result and buttons */
+.font-oryno-bold {
+  font-family: "Oryno Bold", "Oryno", var(--font-oryno) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em;
+}
+
+/* Render mathematical digits, characters, and labels in Oryno Bold */
+.katex .mord,
+.katex .mn,
+.katex .mi,
+.katex .mop,
+.katex .mbin,
+.katex .mrel,
+.katex-html {
+  font-family: var(--font-oryno);
+  font-weight: 700;
+}
+
+/* Calculator LCD cursor blinking */
+@keyframes calc-cursor-blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.calc-cursor {
+  display: inline-block !important;
+  vertical-align: 0em !important;
+  color: #111827 !important;
+  animation: calc-cursor-blink 0.9s step-start infinite !important;
+  margin-left: 0.5px !important;
+  margin-right: 0.5px !important;
+  height: 0.66em !important;
+  line-height: 1 !important;
+}
+
+.calc-cursor .katex-rule,
+.calc-cursor.katex-rule,
+.calc-cursor .rule {
+  border-right-color: #111827 !important;
+  border-top-color: #111827 !important;
+  background-color: #111827 !important;
+  border-right-width: 2px !important;
+  width: 2px !important;
+  max-width: 2px !important;
+  height: 0.66em !important;
+  max-height: 0.66em !important;
+  bottom: 0em !important;
+}
+
+/* Apply CalcES transition specification to interactive keypad buttons */
+button {
+  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 0.15s;
+}
+
+/* 
+ * KaTeX Fraction & Division display tuning:
+ * Centers horizontal division line with consistent, compact balanced spacing
+ * from both numerator and denominator nodes.
+ */
+.katex .mfrac {
+  padding: 0.04em 0.16em !important;
+  vertical-align: -0.42em !important;
+}
+
+.katex .mfrac .vlist {
+  position: relative !important;
+}
+
+/* Fraction horizontal division bar: crisp, high-contrast, symmetrically spaced */
+.katex .mfrac .frac-line {
+  border-bottom: 1.75px solid #111827 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  background-color: transparent !important;
+  opacity: 1 !important;
+  margin: 0.04em 0 !important;
+  transform: none !important;
+}
+
+/* 
+ * Symmetrical vertical balance:
+ * Equalizes clearance so the fraction division bar has identical consistent
+ * spacing from both the numerator and denominator nodes.
+ */
+.katex .mfrac .vlist > span:first-child {
+  padding-bottom: 0.04em !important;
+  transform: none !important;
+}
+
+.katex .mfrac .vlist > span:last-child {
+  padding-top: 0.04em !important;
+  transform: none !important;
+}
+
+/* 
+ * Casio Natural-V.P.A.M. Empty Template Box (▯)
+ * Matches the authentic LCD placeholder box and exact font scale from the Casio display
+ */
+.calc-box {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 0.52em !important;
+  height: 0.66em !important;
+  border: 1.5px solid #2563eb !important;
+  border-radius: 1.5px !important;
+  vertical-align: 0em !important;
+  background-color: transparent !important;
+  box-sizing: border-box !important;
+  margin: 0 1px !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+}
+
+/* Active focused placeholder box: keep stable box outline so only the cursor blinks */
+.calc-box-active {
+  border-color: #2563eb !important;
+  background-color: transparent !important;
+}
+
+/* Sharp, authentic calculator cursor blink animation */
+@keyframes sharpCursorBlink {
+  0%, 49% {
+    opacity: 1;
+  }
+  50%, 100% {
+    opacity: 0;
+  }
+}
+
+.animate-cursor-blink {
+  animation: sharpCursorBlink 0.85s step-end infinite;
+}
+

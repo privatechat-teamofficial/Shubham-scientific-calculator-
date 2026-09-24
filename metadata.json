@@ -1,0 +1,10 @@
+{
+  "name": "Remix Remix Remix MathDA Scientific Calculator",
+  "description": "Advanced scientific and graphing calculator with natural textbook display, exact fractions, equation solver, and Casio ClassWiz layout.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
