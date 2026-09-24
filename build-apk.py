@@ -18,6 +18,7 @@ def ensure_keystore():
     os.makedirs(KEYSTORE_DIR, exist_ok=True)
     key_pem = os.path.join(KEYSTORE_DIR, "release.key.pem")
     cert_pem = os.path.join(KEYSTORE_DIR, "release.cert.pem")
+    key_pk8 = os.path.join(KEYSTORE_DIR, "release.key.pk8")
     
     if not (os.path.exists(key_pem) and os.path.exists(cert_pem)):
         print("Generating SHUBHAM Release Key & Certificate...")
@@ -28,7 +29,42 @@ def ensure_keystore():
             "-subj", "/C=US/O=SHUBHAM/CN=SHUBHAM Calculator"
         ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         
-    return key_pem, cert_pem
+    if not os.path.exists(key_pk8):
+        print("Converting release key to PKCS#8 DER format for apksigner...")
+        subprocess.run([
+            "openssl", "pkcs8", "-topk8", "-outform", "DER",
+            "-in", key_pem, "-out", key_pk8, "-nocrypt"
+        ], check=True)
+        
+    return key_pem, cert_pem, key_pk8
+
+def find_android_tool(tool_name):
+    # 1. Search PATH
+    found = shutil.which(tool_name)
+    if found:
+        return found
+    # 2. Check ANDROID_HOME and ANDROID_SDK_ROOT
+    for env_var in ["ANDROID_HOME", "ANDROID_SDK_ROOT"]:
+        sdk_root = os.environ.get(env_var)
+        if sdk_root and os.path.isdir(sdk_root):
+            bt_dir = os.path.join(sdk_root, "build-tools")
+            if os.path.isdir(bt_dir):
+                for ver in sorted(os.listdir(bt_dir), reverse=True):
+                    cand = os.path.join(bt_dir, ver, tool_name)
+                    if os.path.isfile(cand) and os.access(cand, os.X_OK):
+                        return cand
+            cand = os.path.join(sdk_root, "platform-tools", tool_name)
+            if os.path.isfile(cand) and os.access(cand, os.X_OK):
+                return cand
+    # 3. Known system paths
+    for cand in [
+        f"/usr/bin/{tool_name}",
+        f"/usr/lib/android-sdk/build-tools/debian/{tool_name}",
+        f"/usr/lib/android-sdk/platform-tools/{tool_name}",
+    ]:
+        if os.path.isfile(cand) and os.access(cand, os.X_OK):
+            return cand
+    return None
 
 def modify_manifest(data, string_replacements):
     file_type, file_hdr_size, file_size = struct.unpack('<HHI', data[:8])
@@ -224,11 +260,10 @@ def main():
     if "resources.arsc" not in files_map:
         raise RuntimeError("Missing resources.arsc in base APK")
         
-    # Update manifest strings to com.shubham.calculator
+    # Update manifest strings to com.shubham.calculator while keeping launcher activity matching classes.dex
     raw_manifest = files_map["AndroidManifest.xml"]
     files_map["AndroidManifest.xml"] = modify_manifest(raw_manifest, {
         "com.mathda.calculator": "com.shubham.calculator",
-        "com.mathda.calculator.MainActivity": "com.shubham.calculator.MainActivity",
         "1.0.11": "1.0.0"
     })
     
@@ -258,60 +293,52 @@ def main():
                 with open(fp, "rb") as f_obj:
                     files_map["assets/www/fonts/" + f] = f_obj.read()
                     
-    # 4. Generate Cryptographic Signature Scheme v1 (MANIFEST.MF, RELEASE.SF, RELEASE.RSA)
-    print("4. Generating APK Signature Scheme v1...")
-    key_pem, cert_pem = ensure_keystore()
-    
-    manifest_lines = ["Manifest-Version: 1.0\r\nCreated-By: 1.0 (Android)\r\n\r\n"]
-    manifest_entries = {}
-    for name in sorted(files_map.keys()):
-        digest = base64.b64encode(hashlib.sha256(files_map[name]).digest()).decode("ascii")
-        entry = f"Name: {name}\r\nSHA-256-Digest: {digest}\r\n\r\n"
-        manifest_entries[name] = entry
-        manifest_lines.append(entry)
-    manifest_bytes = "".join(manifest_lines).encode("utf-8")
-    
-    sf_lines = [
-        "Signature-Version: 1.0\r\n",
-        "Created-By: 1.0 (Android)\r\n",
-        f"SHA-256-Digest-Manifest: {base64.b64encode(hashlib.sha256(manifest_bytes).digest()).decode('ascii')}\r\n\r\n"
-    ]
-    for name in sorted(files_map.keys()):
-        entry_bytes = manifest_entries[name].encode("utf-8")
-        digest = base64.b64encode(hashlib.sha256(entry_bytes).digest()).decode("ascii")
-        sf_lines.append(f"Name: {name}\r\nSHA-256-Digest: {digest}\r\n\r\n")
-    sf_bytes = "".join(sf_lines).encode("utf-8")
-    
-    sf_tmp = os.path.join(BUILD_DIR, "RELEASE.SF")
-    rsa_tmp = os.path.join(BUILD_DIR, "RELEASE.RSA")
-    with open(sf_tmp, "wb") as f:
-        f.write(sf_bytes)
-        
-    subprocess.run([
-        "openssl", "cms", "-sign",
-        "-in", sf_tmp,
-        "-signer", cert_pem,
-        "-inkey", key_pem,
-        "-outform", "DER",
-        "-out", rsa_tmp,
-        "-binary", "-nosmimecap"
-    ], check=True)
-    
-    with open(rsa_tmp, "rb") as f:
-        rsa_bytes = f.read()
-        
-    # 5. Assemble v1 signed ZIP
-    signed_apk = os.path.join(BUILD_DIR, "app-debug.apk")
-    with zipfile.ZipFile(signed_apk, "w", zipfile.ZIP_DEFLATED) as z_out:
-        z_out.writestr("META-INF/MANIFEST.MF", manifest_bytes)
-        z_out.writestr("META-INF/RELEASE.SF", sf_bytes)
-        z_out.writestr("META-INF/RELEASE.RSA", rsa_bytes)
+    # 4. Assemble final unsigned APK (resources.arsc must be stored uncompressed ZIP_STORED)
+    print("4. Assembling unsigned APK with uncompressed resources.arsc (ZIP_STORED)...")
+    unsigned_apk = os.path.join(BUILD_DIR, "app-unsigned.apk")
+    with zipfile.ZipFile(unsigned_apk, "w") as z_out:
         for name in sorted(files_map.keys()):
-            z_out.writestr(name, files_map[name])
-            
-    # 6. Apply APK Signature Scheme v2 (for Android 7.0 - Android 15 compatibility)
-    print("5. Applying APK Signature Scheme v2 (APK Sig Block 42)...")
-    apply_apk_v2_signature(signed_apk, key_pem, cert_pem)
+            data = files_map[name]
+            compress_type = zipfile.ZIP_STORED if name == "resources.arsc" else zipfile.ZIP_DEFLATED
+            z_out.writestr(name, data, compress_type=compress_type)
+
+    # 5. 4-byte ZIP alignment on unsigned APK
+    print("5. Running zipalign -p -f 4 on unsigned APK...")
+    zipalign_bin = find_android_tool("zipalign")
+    if not zipalign_bin:
+        raise RuntimeError("zipalign tool not found! Android APK requires 4-byte alignment.")
+    aligned_apk = os.path.join(BUILD_DIR, "app-aligned.apk")
+    subprocess.run([zipalign_bin, "-p", "-f", "4", unsigned_apk, aligned_apk], check=True)
+    print(f"   ✓ Successfully 4-byte aligned APK using {zipalign_bin}")
+
+    # 6. Sign aligned APK
+    print("6. Signing aligned APK...")
+    key_pem, cert_pem, key_pk8 = ensure_keystore()
+    signed_apk = os.path.join(BUILD_DIR, "app-debug.apk")
+    apksigner_bin = find_android_tool("apksigner")
+    if apksigner_bin:
+        shutil.copy2(aligned_apk, signed_apk)
+        subprocess.run([
+            apksigner_bin, "sign",
+            "--key", key_pk8,
+            "--cert", cert_pem,
+            "--v1-signing-enabled", "true",
+            "--v2-signing-enabled", "true",
+            "--v3-signing-enabled", "true",
+            signed_apk
+        ], check=True)
+        print(f"   ✓ APK successfully signed using {apksigner_bin}")
+    else:
+        shutil.copy2(aligned_apk, signed_apk)
+        apply_apk_v2_signature(signed_apk, key_pem, cert_pem)
+
+    # 7. Verification of signature and alignment
+    print("7. Verifying APK signature and alignment...")
+    if apksigner_bin:
+        subprocess.run([apksigner_bin, "verify", "--verbose", "--print-certs", signed_apk], check=True)
+        print("   ✓ apksigner signature verification PASSED")
+    subprocess.run([zipalign_bin, "-c", "-v", "4", signed_apk], check=True)
+    print("   ✓ zipalign 4-byte verification PASSED")
     
     apk_size = os.path.getsize(signed_apk)
     apk_size_mb = apk_size / (1024 * 1024)
