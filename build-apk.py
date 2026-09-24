@@ -27,12 +27,31 @@ def ensure_keystore():
         
     return key_pem, cert_pem
 
+def clean_old_duplicate_apks():
+    print("Cleaning up old duplicate APK files across directories...")
+    folders = [
+        os.path.join(APPLET_DIR, "APK_DOWNLOAD"),
+        os.path.join(APPLET_DIR, ".build-outputs"),
+        os.path.join(APPLET_DIR, "public")
+    ]
+    for folder in folders:
+        if os.path.exists(folder):
+            for item in os.listdir(folder):
+                if item.endswith(".apk") and item != "app-debug.apk":
+                    file_p = os.path.join(folder, item)
+                    try:
+                        os.remove(file_p)
+                        print(f"   Removed old duplicate: {file_p}")
+                    except Exception as e:
+                        print(f"   Could not remove {file_p}: {e}")
+
 def main():
     print("==================================================")
-    print("  BUILDING REAL ANDROID DEBUG APK (v1 Signed)    ")
+    print("  BUILDING CLEAN SINGLE ANDROID DEBUG APK (v1)   ")
     print("==================================================")
     
     os.makedirs(BUILD_DIR, exist_ok=True)
+    clean_old_duplicate_apks()
     
     # 1. Compile React web application bundle
     print("1. Compiling React web application bundle...")
@@ -42,12 +61,10 @@ def main():
     if not os.path.exists(dist_dir):
         raise RuntimeError("dist directory was not created!")
         
-    # 2. Base APK with Android runtime binaries
-    base_apk = os.path.join(APPLET_DIR, "public", "SHUBHAM-Calculator.apk")
+    # 2. Locate pristine base APK with Android runtime binaries
+    base_apk = "/tmp/original_app/public/SHUBHAM-Calculator.apk"
     if not os.path.exists(base_apk):
-        base_apk = os.path.join(APPLET_DIR, "APK_DOWNLOAD", "SHUBHAM-Calculator.apk")
-    if not os.path.exists(base_apk):
-        base_apk = os.path.join(APPLET_DIR, ".build-outputs", "SHUBHAM-Calculator.apk")
+        base_apk = os.path.join(APPLET_DIR, "public", "SHUBHAM-Calculator.apk")
         
     if not os.path.exists(base_apk):
         raise RuntimeError(f"Base APK not found at {base_apk}")
@@ -97,31 +114,38 @@ def main():
             if os.path.isfile(fp):
                 with open(fp, "rb") as f_obj:
                     files_map["assets/www/fonts/" + f] = f_obj.read()
-                    
-    # 4. Generate Cryptographic Signature (APK Signature Scheme v1)
+
+    # 4. Generate Cryptographic Signature (APK Signature Scheme v1 with SHA1 & SHA256)
     print("4. Generating APK Signature Scheme v1 (MANIFEST.MF, RELEASE.SF, RELEASE.RSA)...")
     key_pem, cert_pem = ensure_keystore()
     
-    # Generate MANIFEST.MF
+    # Generate MANIFEST.MF with both SHA1 and SHA256 digests
     manifest_lines = ["Manifest-Version: 1.0\r\nCreated-By: 1.0 (Android)\r\n\r\n"]
     manifest_entries = {}
     for name in sorted(files_map.keys()):
-        digest = base64.b64encode(hashlib.sha256(files_map[name]).digest()).decode("ascii")
-        entry = f"Name: {name}\r\nSHA-256-Digest: {digest}\r\n\r\n"
+        file_bytes = files_map[name]
+        sha1_d = base64.b64encode(hashlib.sha1(file_bytes).digest()).decode("ascii")
+        sha256_d = base64.b64encode(hashlib.sha256(file_bytes).digest()).decode("ascii")
+        entry = f"Name: {name}\r\nSHA1-Digest: {sha1_d}\r\nSHA-256-Digest: {sha256_d}\r\n\r\n"
         manifest_entries[name] = entry
         manifest_lines.append(entry)
     manifest_bytes = "".join(manifest_lines).encode("utf-8")
     
-    # Generate RELEASE.SF
+    # Generate RELEASE.SF with both SHA1 and SHA256 digests
+    manifest_sha1 = base64.b64encode(hashlib.sha1(manifest_bytes).digest()).decode('ascii')
+    manifest_sha256 = base64.b64encode(hashlib.sha256(manifest_bytes).digest()).decode('ascii')
+    
     sf_lines = [
         "Signature-Version: 1.0\r\n",
         "Created-By: 1.0 (Android)\r\n",
-        f"SHA-256-Digest-Manifest: {base64.b64encode(hashlib.sha256(manifest_bytes).digest()).decode('ascii')}\r\n\r\n"
+        f"SHA1-Digest-Manifest: {manifest_sha1}\r\n",
+        f"SHA-256-Digest-Manifest: {manifest_sha256}\r\n\r\n"
     ]
     for name in sorted(files_map.keys()):
         entry_bytes = manifest_entries[name].encode("utf-8")
-        digest = base64.b64encode(hashlib.sha256(entry_bytes).digest()).decode("ascii")
-        sf_lines.append(f"Name: {name}\r\nSHA-256-Digest: {digest}\r\n\r\n")
+        sha1_d = base64.b64encode(hashlib.sha1(entry_bytes).digest()).decode("ascii")
+        sha256_d = base64.b64encode(hashlib.sha256(entry_bytes).digest()).decode("ascii")
+        sf_lines.append(f"Name: {name}\r\nSHA1-Digest: {sha1_d}\r\nSHA-256-Digest: {sha256_d}\r\n\r\n")
     sf_bytes = "".join(sf_lines).encode("utf-8")
     
     # Sign RELEASE.SF using OpenSSL CMS
@@ -145,13 +169,17 @@ def main():
         
     # 5. Assemble final signed APK
     print("5. Assembling signed APK archive...")
-    signed_apk = os.path.join(BUILD_DIR, "shubham_scientific_calculator.apk")
+    signed_apk = os.path.join(BUILD_DIR, "app-debug.apk")
     with zipfile.ZipFile(signed_apk, "w", zipfile.ZIP_DEFLATED) as z_out:
         z_out.writestr("META-INF/MANIFEST.MF", manifest_bytes)
         z_out.writestr("META-INF/RELEASE.SF", sf_bytes)
         z_out.writestr("META-INF/RELEASE.RSA", rsa_bytes)
         for name in sorted(files_map.keys()):
-            z_out.writestr(name, files_map[name])
+            # Keep uncompressed store for resources.arsc and .so files
+            if name == "resources.arsc" or name.endswith(".so"):
+                z_out.writestr(name, files_map[name], compress_type=zipfile.ZIP_STORED)
+            else:
+                z_out.writestr(name, files_map[name], compress_type=zipfile.ZIP_DEFLATED)
             
     apk_size = os.path.getsize(signed_apk)
     apk_size_mb = apk_size / (1024 * 1024)
@@ -159,29 +187,23 @@ def main():
     if apk_size < 1024 * 1024:
         raise RuntimeError(f"APK size {apk_size} bytes is smaller than 1MB!")
         
-    # 6. Distribute APK to all target destinations
+    # 6. Distribute ONLY ONE SINGLE APK (app-debug.apk) to target locations
     destinations = [
-        os.path.join(APPLET_DIR, ".build-outputs", "shubham scientificcalculator.apk"),
-        os.path.join(APPLET_DIR, "APK_DOWNLOAD", "shubham scientificcalculator.apk"),
-        os.path.join(APPLET_DIR, "public", "shubham scientificcalculator.apk"),
-        os.path.join(APPLET_DIR, ".build-outputs", "shubham scientific calculator.apk"),
-        os.path.join(APPLET_DIR, "APK_DOWNLOAD", "shubham scientific calculator.apk"),
-        os.path.join(APPLET_DIR, "public", "shubham scientific calculator.apk"),
-        os.path.join(APPLET_DIR, ".build-outputs", "SHUBHAM-Calculator.apk"),
-        os.path.join(APPLET_DIR, "APK_DOWNLOAD", "SHUBHAM-Calculator.apk"),
-        os.path.join(APPLET_DIR, "public", "SHUBHAM-Calculator.apk"),
-        os.path.join(APPLET_DIR, ".build-outputs", "app-debug.apk"),
         os.path.join(APPLET_DIR, "APK_DOWNLOAD", "app-debug.apk"),
+        os.path.join(APPLET_DIR, ".build-outputs", "app-debug.apk"),
         os.path.join(APPLET_DIR, "public", "app-debug.apk"),
     ]
     
     for dest in destinations:
         os.makedirs(os.path.dirname(dest), exist_ok=True)
         shutil.copy2(signed_apk, dest)
-        print(f"   ✓ Placed APK at: {dest} ({os.path.getsize(dest)} bytes)")
+        print(f"   ✓ Placed SINGLE APK at: {dest} ({os.path.getsize(dest)} bytes)")
         
-    # 7. Create/Update SHUBHAM-Calculator-App.zip
-    print("7. Packaging full project ZIP (including real APK)...")
+    # Clean up any leftover duplicate files again
+    clean_old_duplicate_apks()
+
+    # 7. Create clean SHUBHAM-Calculator-App.zip with ONLY 1 APK
+    print("7. Packaging full project ZIP (including strictly ONE single APK)...")
     zip_path = os.path.join(APPLET_DIR, "SHUBHAM-Calculator-App.zip")
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
         for folder in ["src", "public", "APK_DOWNLOAD", ".build-outputs"]:
@@ -198,14 +220,13 @@ def main():
                 zf.write(p, f)
                 
     zip_size_mb = os.path.getsize(zip_path) / (1024 * 1024)
-    print(f"   ✓ Generated ZIP at {zip_path} ({zip_size_mb:.2f} MB)")
+    print(f"   ✓ Generated Clean ZIP at {zip_path} ({zip_size_mb:.2f} MB)")
     
-    # Also copy zip to APK_DOWNLOAD and public
-    shutil.copy2(zip_path, os.path.join(APPLET_DIR, "APK_DOWNLOAD", "SHUBHAM-Calculator-App.zip"))
+    # Copy zip to public for download
     shutil.copy2(zip_path, os.path.join(APPLET_DIR, "public", "SHUBHAM-Calculator-App.zip"))
     
     print("==================================================")
-    print("  BUILD SUCCESSFUL: REAL SIGNED ANDROID APK READY ")
+    print("  BUILD SUCCESSFUL: SINGLE REAL APK READY         ")
     print("==================================================")
 
 if __name__ == "__main__":

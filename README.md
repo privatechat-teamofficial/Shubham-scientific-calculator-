@@ -14,8 +14,28 @@ A high-performance Casio ClassWiz FX-style scientific and graphing calculator bu
 
 ---
 
+## GitHub Releases & Latest APK Download
+Latest installable Android APK builds are automatically packaged and published to **GitHub Releases**:
+- 📥 **Direct APK Download**: [`app-debug.apk`](./APK_DOWNLOAD/app-debug.apk) (also published on the [GitHub Releases](https://github.com/) page with every tag).
+- 📦 **Source + Bundle Archive**: [`SHUBHAM-Calculator-App.zip`](./SHUBHAM-Calculator-App.zip)
+
+### Creating a New GitHub Release with Latest APK
+Whenever a git tag is pushed (e.g., `v1.0.0`), the GitHub Actions workflow (`.github/workflows/release.yml`) automatically builds the production web assets, signs the Android APK, and attaches `app-debug.apk` directly to the GitHub Release.
+
+```bash
+# 1. Tag and push to trigger automated GitHub Release build:
+git tag v1.0.0
+git push origin v1.0.0
+
+# Or run the local release script:
+bash publish-release.sh v1.0.0
+```
+
+---
+
 ## Included in this Package
-1. **`SHUBHAM-Calculator.apk`**: Production-ready Android APK (offline installable app).
+1. **`APK_DOWNLOAD/app-debug.apk`**: Clean, validated production-ready Android APK (offline installable app).
+2. **`.github/workflows/release.yml`**: Automated CI/CD pipeline for GitHub Releases.
 2. **`src/`**: Full TypeScript and React source codebase including:
    - `src/components/Keypad.tsx`: Casio ClassWiz physical keypad layout
    - `src/components/NaturalDisplay.tsx`: Natural textbook math renderer
