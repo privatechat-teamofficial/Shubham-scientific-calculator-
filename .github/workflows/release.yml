@@ -2,18 +2,9 @@ name: Build & Publish GitHub Release APK
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
   workflow_dispatch:
-    inputs:
-      tag_name:
-        description: 'Release Tag (e.g., v1.0.0)'
-        required: true
-        default: 'v1.0.0'
-      release_title:
-        description: 'Release Title'
-        required: false
-        default: 'SHUBHAM Scientific Calculator - Latest APK Release'
 
 permissions:
   contents: write
@@ -26,13 +17,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20.x
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
-      - name: Setup Python 3.10
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
@@ -41,22 +31,30 @@ jobs:
         run: |
           npm install
 
-      - name: Build Web Bundle & Compile Android APK
+      - name: Build Web Bundle & Android APK
         run: |
           python3 build-apk.py
 
-      - name: Verify APK & Assets Generated
+      - name: Verify APK Generated
         run: |
-          ls -lh APK_DOWNLOAD/
-          ls -lh .build-outputs/
-          test -f APK_DOWNLOAD/app-debug.apk || (echo "APK not found!" && exit 1)
+          echo "Verifying generated build artifacts..."
+          ls -la APK_DOWNLOAD/
+          ls -la .build-outputs/
+          if [ ! -f APK_DOWNLOAD/app-debug.apk ]; then
+            echo "ERROR: APK_DOWNLOAD/app-debug.apk does not exist!"
+            exit 1
+          fi
+          if [ ! -s APK_DOWNLOAD/app-debug.apk ]; then
+            echo "ERROR: APK_DOWNLOAD/app-debug.apk is empty (0B)!"
+            exit 1
+          fi
+          echo "SUCCESS: APK_DOWNLOAD/app-debug.apk verified successfully ($(stat -c%s APK_DOWNLOAD/app-debug.apk) bytes)."
 
-      - name: Create GitHub Release & Upload APK
+      - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
         with:
-          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
-          name: ${{ github.event.inputs.release_title || github.ref_name }}
+          tag_name: build-${{ github.run_number }}
+          name: SHUBHAM Scientific Calculator - Build ${{ github.run_number }}
           draft: false
           prerelease: false
           generate_release_notes: true
