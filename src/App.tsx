@@ -1002,7 +1002,7 @@ export default function App() {
 
   return (
     <div 
-      className={`min-h-screen w-full max-w-none sm:max-w-md mx-auto bg-[#000000] text-slate-100 flex flex-col justify-start select-none shadow-2xl relative overflow-x-hidden overflow-y-auto font-oryno-bold transition-opacity duration-300 ease-out ${isReady ? 'opacity-100' : 'opacity-0'}`}
+      className={`min-h-screen w-full max-w-none md:max-w-md mx-auto bg-[#000000] text-slate-100 flex flex-col justify-start select-none shadow-2xl relative overflow-x-hidden overflow-y-auto font-oryno-bold transition-opacity duration-300 ease-out ${isReady ? 'opacity-100' : 'opacity-0'}`}
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >

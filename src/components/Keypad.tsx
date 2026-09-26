@@ -112,7 +112,7 @@ export const Keypad: React.FC<KeypadProps> = ({
   );
 
   return (
-    <div className="w-full bg-[#000000] px-2 py-1 select-none flex flex-col gap-1 max-w-lg mx-auto font-oryno-bold">
+    <div className="w-full bg-[#000000] px-2 py-1 select-none flex flex-col gap-1 max-w-none md:max-w-lg mx-auto font-oryno-bold">
       {/* ============================================================== */}
       {/* ROW 1: SHIFT, ALPHA, LARGE D-PAD, MENU, SETUP                  */}
       {/* ============================================================== */}

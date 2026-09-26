@@ -9,10 +9,55 @@ import struct
 import base64
 import tempfile
 import zlib
+import io
 
 APPLET_DIR = os.path.dirname(os.path.abspath(__file__))
 BUILD_DIR = "/tmp/apk_real_build"
 KEYSTORE_DIR = os.path.join(APPLET_DIR, ".keystore")
+
+def generate_launcher_icons():
+    from PIL import Image, ImageDraw, ImageFont
+    icons = {}
+    sizes = [48, 72, 96, 144, 192]
+    
+    font_path = None
+    for p in [
+        os.path.join(APPLET_DIR, "public", "fonts", "Oryno-Bold.ttf"),
+        os.path.join(APPLET_DIR, "public", "fonts", "Oryno-Bold.otf")
+    ]:
+        if os.path.exists(p):
+            font_path = p
+            break
+
+    for size in sizes:
+        img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(img)
+        radius = int(size * 0.22)
+        # Amber background: #f59e0b (245, 158, 11)
+        draw.rounded_rectangle([0, 0, size - 1, size - 1], radius=radius, fill=(245, 158, 11, 255))
+        
+        font_size = int(size * 0.62)
+        font = None
+        if font_path:
+            try:
+                font = ImageFont.truetype(font_path, font_size)
+            except Exception:
+                font = ImageFont.load_default()
+        else:
+            font = ImageFont.load_default()
+            
+        text = "Σ"
+        bbox = draw.textbbox((0, 0), text, font=font)
+        tw = bbox[2] - bbox[0]
+        th = bbox[3] - bbox[1]
+        tx = (size - tw) / 2 - bbox[0]
+        ty = (size - th) / 2 - bbox[1] - (size * 0.02)
+        draw.text((tx, ty), text, fill=(0, 0, 0, 255), font=font)
+        
+        buf = io.BytesIO()
+        img.save(buf, format='PNG')
+        icons[size] = buf.getvalue()
+    return icons
 
 def ensure_keystore():
     os.makedirs(KEYSTORE_DIR, exist_ok=True)
@@ -267,6 +312,19 @@ def main():
         "1.0.11": "1.0.0"
     })
     
+    # Overwrite launcher icons in files_map with generated amber Sigma logo
+    try:
+        launcher_icons = generate_launcher_icons()
+        files_map["res/drawable/ic_launcher.png"] = launcher_icons[192]
+        files_map["res/mipmap-mdpi-v4/ic_launcher.png"] = launcher_icons[48]
+        files_map["res/mipmap-hdpi-v4/ic_launcher.png"] = launcher_icons[72]
+        files_map["res/mipmap-xhdpi-v4/ic_launcher.png"] = launcher_icons[96]
+        files_map["res/mipmap-xxhdpi-v4/ic_launcher.png"] = launcher_icons[144]
+        files_map["res/mipmap-xxxhdpi-v4/ic_launcher.png"] = launcher_icons[192]
+        print("   ✓ Replaced all launcher icons (ic_launcher.png) with SHUBHAM amber Sigma logo")
+    except Exception as e:
+        print(f"   ⚠ Icon generation warning: {e}")
+    
     # 3. Inject latest web application build
     print("3. Injecting latest web application assets into APK assets/www/...")
     with open(os.path.join(dist_dir, "index.html"), "r", encoding="utf-8") as f:
@@ -361,17 +419,22 @@ def main():
                 if f.endswith(".apk") and f != "app-debug.apk":
                     os.remove(os.path.join(folder, f))
                     
-    # 7. Distribute single real APK
-    destinations = [
-        os.path.join(APPLET_DIR, ".build-outputs", "app-debug.apk"),
-        os.path.join(APPLET_DIR, "APK_DOWNLOAD", "app-debug.apk"),
-        os.path.join(APPLET_DIR, "public", "app-debug.apk"),
+    # 7. Distribute real APK under custom app names
+    apk_filenames = [
+        "SHUBHAM-Scientific-Calculator.apk",
+        "SHUBHAM-Calculator.apk",
+        "app-debug.apk"
     ]
-    
-    for dest in destinations:
-        os.makedirs(os.path.dirname(dest), exist_ok=True)
-        shutil.copy2(signed_apk, dest)
-        print(f"   ✓ Placed APK at: {dest} ({os.path.getsize(dest)} bytes)")
+    for folder in [
+        os.path.join(APPLET_DIR, "APK_DOWNLOAD"),
+        os.path.join(APPLET_DIR, ".build-outputs"),
+        os.path.join(APPLET_DIR, "public")
+    ]:
+        os.makedirs(folder, exist_ok=True)
+        for fname in apk_filenames:
+            dest_p = os.path.join(folder, fname)
+            shutil.copy2(signed_apk, dest_p)
+            print(f"   ✓ Placed APK at: {dest_p} ({os.path.getsize(dest_p)} bytes)")
         
     # 8. Create/Update SHUBHAM-Calculator-App.zip
     print("8. Packaging full project ZIP (including real APK)...")
