@@ -1052,8 +1052,8 @@ export default function App() {
           canRedo={redoStack.length > 0}
         />
 
-        {/* ClassWiz Keypad */}
-        <div className="flex-1 flex flex-col justify-end bg-[#000000] pb-2 sm:pb-3">
+        {/* ClassWiz Keypad - seamlessly connected directly below Status Bar */}
+        <div className="w-full bg-[#000000] pb-2 sm:pb-3 shrink-0">
           <Keypad
             isShift={isShift}
             isAlpha={isAlpha}
