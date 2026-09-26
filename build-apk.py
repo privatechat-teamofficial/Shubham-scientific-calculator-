@@ -282,7 +282,15 @@ def main():
                 full_p = os.path.join(root, f)
                 rel_p = os.path.relpath(full_p, dist_dir)
                 with open(full_p, "rb") as fp:
-                    files_map["assets/www/" + rel_p] = fp.read()
+                    content = fp.read()
+                if f.endswith(".css"):
+                    try:
+                        text_css = content.decode("utf-8")
+                        text_css = text_css.replace("url(/fonts/", "url(../fonts/").replace("url('/fonts/", "url('../fonts/").replace('url("/fonts/', 'url("../fonts/')
+                        content = text_css.encode("utf-8")
+                    except Exception:
+                        pass
+                files_map["assets/www/" + rel_p] = content
                     
     # Copy public fonts
     fonts_dir = os.path.join(APPLET_DIR, "public", "fonts")
@@ -316,7 +324,7 @@ def main():
     key_pem, cert_pem, key_pk8 = ensure_keystore()
     signed_apk = os.path.join(BUILD_DIR, "app-debug.apk")
     apksigner_bin = find_android_tool("apksigner")
-    if apksigner_bin:
+    if apksigner_bin and shutil.which("java"):
         shutil.copy2(aligned_apk, signed_apk)
         subprocess.run([
             apksigner_bin, "sign",
@@ -334,7 +342,7 @@ def main():
 
     # 7. Verification of signature and alignment
     print("7. Verifying APK signature and alignment...")
-    if apksigner_bin:
+    if apksigner_bin and shutil.which("java"):
         subprocess.run([apksigner_bin, "verify", "--verbose", "--print-certs", signed_apk], check=True)
         print("   ✓ apksigner signature verification PASSED")
     subprocess.run([zipalign_bin, "-c", "-v", "4", signed_apk], check=True)
