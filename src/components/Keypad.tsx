@@ -18,7 +18,6 @@ interface KeypadProps {
   onOpenSettings: () => void;
   onOpenOption: () => void;
   onTurnOn?: () => void;
-  keyHeight?: number;
 }
 
 let sharedAudioCtx: AudioContext | null = null;
@@ -45,10 +44,7 @@ export const Keypad: React.FC<KeypadProps> = ({
   onOpenSettings,
   onOpenOption,
   onTurnOn,
-  keyHeight = 44,
 }) => {
-  const btnStyle = keyHeight ? { height: `${keyHeight}px` } : undefined;
-
   const handleKey = (action: string, meta?: any) => {
     playVibration();
     onKeyPress(action, meta);
@@ -116,7 +112,7 @@ export const Keypad: React.FC<KeypadProps> = ({
   );
 
   return (
-    <div className="w-full bg-[#000000] px-2 py-1 select-none flex flex-col gap-1 max-w-none md:max-w-lg mx-auto font-oryno-bold">
+    <div className="w-full bg-[#000000] px-0 py-1 select-none flex flex-col gap-1.5 font-oryno-bold">
       {/* ============================================================== */}
       {/* ROW 1: SHIFT, ALPHA, LARGE D-PAD, MENU, SETUP                  */}
       {/* ============================================================== */}

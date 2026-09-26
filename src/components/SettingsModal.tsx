@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Sliders, Volume2, Type, Mail, Check, Copy } from 'lucide-react';
+import { X, Sliders, Volume2, Type, Mail, Check, Copy, Maximize2 } from 'lucide-react';
 import { AngleUnit, FractionFormat, NumberFormat } from '../types';
 
 interface SettingsModalProps {
@@ -15,6 +15,8 @@ interface SettingsModalProps {
   onSetFontSize: (size: number) => void;
   audioFeedback: boolean;
   onSetAudioFeedback: (enabled: boolean) => void;
+  fitToScreen?: boolean;
+  onToggleFitToScreen?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -30,6 +32,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onSetFontSize,
   audioFeedback,
   onSetAudioFeedback,
+  fitToScreen = false,
+  onToggleFitToScreen,
 }) => {
   const [copiedEmail, setCopiedEmail] = useState(false);
   if (!isOpen) return null;
@@ -190,6 +194,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               className="w-5 h-5 accent-amber-500 rounded cursor-pointer"
             />
           </div>
+
+          {/* Fit to Screen Option */}
+          {onToggleFitToScreen && (
+            <div className="flex items-center justify-between p-3 rounded-xl bg-[#141416] border border-neutral-800">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1 rounded-md bg-amber-500/20 text-amber-400">
+                  <Maximize2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-neutral-200 font-bold">Fit to Screen</div>
+                  <div className="text-neutral-500 text-[11px]">Lock calculator directly to window height</div>
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={fitToScreen}
+                onChange={onToggleFitToScreen}
+                className="w-5 h-5 accent-amber-500 rounded cursor-pointer"
+              />
+            </div>
+          )}
 
           {/* Contact Developer */}
           <div className="pt-1">
