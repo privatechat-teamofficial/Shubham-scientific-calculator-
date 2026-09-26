@@ -38,7 +38,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   canRedo,
 }) => {
   return (
-    <div className="w-full bg-[#000000] text-slate-300 px-0 py-1 flex items-center justify-between text-xs select-none font-oryno-bold font-bold">
+    <div className="w-full bg-[#000000] text-slate-300 px-3 py-1 flex items-center justify-between text-xs select-none font-oryno-bold font-bold">
       {/* Mode Indicators matching screenshot pills */}
       <div className="flex items-center gap-1.5">
         {/* SHIFT Indicator (if active) */}

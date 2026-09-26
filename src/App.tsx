@@ -95,26 +95,6 @@ export default function App() {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [showStartup, setShowStartup] = useState(true);
   const [isReady, setIsReady] = useState(false);
-  const [fitToScreen, setFitToScreen] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem('shubham_fit_to_screen');
-      return saved === 'true';
-    } catch {
-      return false;
-    }
-  });
-
-  const handleToggleFitToScreen = () => {
-    setFitToScreen((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem('shubham_fit_to_screen', String(next));
-      } catch {
-        // quota
-      }
-      return next;
-    });
-  };
 
   useEffect(() => {
     const timer = setTimeout(() => setIsReady(true), 20);
@@ -1022,16 +1002,12 @@ export default function App() {
 
   return (
     <div 
-      className={`${
-        fitToScreen 
-          ? 'h-screen h-dvh overflow-hidden flex flex-col justify-between py-1.5' 
-          : 'min-h-screen overflow-x-hidden overflow-y-auto flex flex-col items-stretch justify-start py-2'
-      } w-full max-w-[691px] mx-auto bg-[#000000] text-slate-100 select-none shadow-2xl relative font-oryno-bold transition-opacity duration-300 ease-out px-3.5 sm:px-4 ${isReady ? 'opacity-100' : 'opacity-0'}`}
+      className={`min-h-screen h-full w-full max-w-none sm:max-w-md mx-auto bg-[#000000] text-slate-100 flex flex-col justify-between select-none shadow-2xl relative overflow-x-hidden overflow-y-auto font-oryno-bold transition-opacity duration-300 ease-out ${isReady ? 'opacity-100' : 'opacity-0'}`}
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
       {/* Top Main Calculator Viewport */}
-      <div className={`w-full flex flex-col bg-[#000000] gap-1 ${fitToScreen ? 'flex-1 justify-between overflow-hidden' : ''}`}>
+      <div className="flex-1 flex flex-col bg-[#000000]">
         {/* Header with App Branding and Utility Modals */}
         <Header
           onOpenHistory={() => setIsHistoryOpen(true)}
@@ -1041,8 +1017,6 @@ export default function App() {
           onOpenSettings={() => setIsSettingsOpen(true)}
           onOpenSolver={() => setIsStepSolverOpen(true)}
           onOpenHelp={() => setIsHelpOpen(true)}
-          fitToScreen={fitToScreen}
-          onToggleFitToScreen={handleToggleFitToScreen}
           historyCount={history.length}
         />
 
@@ -1057,7 +1031,6 @@ export default function App() {
           onOpenStepSolver={() => setIsStepSolverOpen(true)}
           fontSize={fontSize}
           onKeyDown={handleKeyDown}
-          fitToScreen={fitToScreen}
         />
 
         {/* Status Bar */}
@@ -1184,8 +1157,6 @@ export default function App() {
         onSetFontSize={setFontSize}
         audioFeedback={audioFeedback}
         onSetAudioFeedback={setAudioFeedback}
-        fitToScreen={fitToScreen}
-        onToggleFitToScreen={handleToggleFitToScreen}
       />
 
       <HelpModal

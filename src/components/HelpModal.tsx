@@ -86,6 +86,19 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               <div><kbd className="px-1.5 py-0.5 bg-[#000000] border border-neutral-700 rounded text-amber-300">^</kbd> : Exponent / Power</div>
             </div>
           </div>
+
+          <div className="p-3 rounded-xl bg-[#141416] border border-neutral-800 flex items-center justify-between">
+            <div>
+              <div className="font-bold text-white text-xs">Developer Contact</div>
+              <div className="text-neutral-400 text-[11px] font-mono mt-0.5">imshubhamk9@gmail.com</div>
+            </div>
+            <a
+              href="mailto:imshubhamk9@gmail.com"
+              className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs transition-all active:scale-95"
+            >
+              Email
+            </a>
+          </div>
         </div>
       </div>
     </div>

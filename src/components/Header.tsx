@@ -3,16 +3,12 @@ import {
   History, 
   TrendingUp, 
   MoreVertical, 
-  Maximize2,
-  Minimize2,
 } from 'lucide-react';
 import { AngleUnit } from '../types';
 
 interface HeaderProps {
   angleUnit?: AngleUnit;
   onCycleAngleUnit?: () => void;
-  fitToScreen?: boolean;
-  onToggleFitToScreen?: () => void;
   onOpenHistory: () => void;
   onOpenVariables?: () => void;
   onOpenCamera: () => void;
@@ -26,8 +22,6 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   angleUnit,
   onCycleAngleUnit,
-  fitToScreen,
-  onToggleFitToScreen,
   onOpenHistory,
   onOpenVariables: _onOpenVariables,
   onOpenCamera,
@@ -38,7 +32,7 @@ export const Header: React.FC<HeaderProps> = ({
   historyCount,
 }) => {
   return (
-    <header className="w-full bg-[#000000] border-b border-neutral-800/80 text-slate-100 px-0 py-2 sm:py-2.5 flex items-center justify-between select-none">
+    <header className="w-full bg-[#000000] border-b border-neutral-800/80 text-slate-100 px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between select-none">
       {/* Brand: older icon size (w-8 h-8) with larger inside Sigma Σ, and only SHUBHAM text */}
       <div className="flex items-center gap-2.5">
         <div 
@@ -63,26 +57,6 @@ export const Header: React.FC<HeaderProps> = ({
             className="px-2 py-0.5 rounded-md text-[11px] font-bold tracking-wider bg-[#1f2937] text-amber-400 border border-amber-400/30 hover:bg-neutral-800 hover:border-amber-400/60 active:scale-95 transition-all shadow-xs"
           >
             {angleUnit}
-          </button>
-        )}
-
-        {/* Fit to Screen Quick Toggle */}
-        {onToggleFitToScreen && (
-          <button
-            id="btn-fit-screen"
-            onClick={onToggleFitToScreen}
-            title={fitToScreen ? "Exit Fit to Screen (Standard View)" : "Fit to Screen"}
-            className={`p-1.5 sm:p-2 rounded-lg border transition-all active:scale-95 ${
-              fitToScreen
-                ? 'bg-amber-500/20 text-amber-400 border-amber-500/40 shadow-xs'
-                : 'bg-[#18181b] text-slate-200 hover:text-amber-300 hover:bg-[#27272a] border-neutral-800'
-            }`}
-          >
-            {fitToScreen ? (
-              <Minimize2 className="w-[18px] h-[18px] sm:w-[19px] sm:h-[19px]" strokeWidth={2.4} />
-            ) : (
-              <Maximize2 className="w-[18px] h-[18px] sm:w-[19px] sm:h-[19px]" strokeWidth={2.4} />
-            )}
           </button>
         )}
 

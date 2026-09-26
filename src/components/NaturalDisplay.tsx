@@ -15,7 +15,6 @@ interface NaturalDisplayProps {
   onOpenStepSolver: () => void;
   fontSize: number; // in px
   onKeyDown?: (e: React.KeyboardEvent) => void;
-  fitToScreen?: boolean;
 }
 
 export const NaturalDisplay: React.FC<NaturalDisplayProps> = ({
@@ -28,7 +27,6 @@ export const NaturalDisplay: React.FC<NaturalDisplayProps> = ({
   onOpenStepSolver,
   fontSize = 26,
   onKeyDown,
-  fitToScreen = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const hiddenInputRef = useRef<HTMLInputElement>(null);
@@ -41,16 +39,14 @@ export const NaturalDisplay: React.FC<NaturalDisplayProps> = ({
   };
 
   return (
-    <div className={`w-full pt-2 pb-1 select-none bg-[#000000] ${fitToScreen ? 'flex-1 min-h-0' : 'shrink-0'}`}>
-      {/* Screen container with stable proportions stretching to exact keypad margins */}
+    <div className="w-full flex-1 flex flex-col px-2.5 pt-1.5 pb-1 select-none bg-[#000000] min-h-[170px] max-h-[360px] sm:max-h-none">
+      {/* Screen container dynamically fills available space with no awkward gaps */}
       <div 
         ref={containerRef}
         tabIndex={0}
         onClick={handleContainerClick}
         onKeyDown={onKeyDown}
-        className={`w-full relative ${
-          fitToScreen ? 'h-full flex-1 min-h-[140px] max-h-[220px]' : 'h-[195px] sm:h-[210px] shrink-0'
-        } bg-[#eaf0e2] text-[#1c281d] flex flex-col justify-between p-3.5 sm:p-4 rounded-[14px] border border-[#d3ddcc] shadow-inner font-oryno-bold overflow-hidden outline-none`}
+        className="w-full flex-1 relative min-h-[170px] bg-[#eaf0e2] text-[#1c281d] flex flex-col justify-between p-3.5 sm:p-4 rounded-[14px] border border-[#d3ddcc] shadow-inner font-oryno-bold overflow-hidden outline-none"
         style={{
           boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.2)',
         }}
