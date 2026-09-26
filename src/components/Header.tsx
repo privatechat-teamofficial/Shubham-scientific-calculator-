@@ -2,7 +2,8 @@ import React from 'react';
 import { 
   History, 
   TrendingUp, 
-  MoreVertical, 
+  MoreVertical,
+  Maximize2,
 } from 'lucide-react';
 import { AngleUnit } from '../types';
 
@@ -14,6 +15,7 @@ interface HeaderProps {
   onOpenCamera: () => void;
   onOpenGraph: () => void;
   onOpenSettings: () => void;
+  onOpenScreenFit?: () => void;
   onOpenSolver?: () => void;
   onOpenHelp?: () => void;
   historyCount: number;
@@ -27,6 +29,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenCamera,
   onOpenGraph,
   onOpenSettings,
+  onOpenScreenFit,
   onOpenSolver: _onOpenSolver,
   onOpenHelp: _onOpenHelp,
   historyCount,
@@ -48,6 +51,19 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Top action icons sized proportionately to the brand badge */}
       <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Screen Fit Popup Button */}
+        {onOpenScreenFit && (
+          <button
+            id="btn-open-screen-fit"
+            onClick={onOpenScreenFit}
+            title="Screen Fit & Dimension Adjustments"
+            className="p-1.5 sm:p-2 rounded-lg bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 border border-amber-500/40 active:scale-95 transition-all flex items-center gap-1 font-bold text-xs"
+          >
+            <Maximize2 className="w-[17px] h-[17px] sm:w-[18px] sm:h-[18px]" strokeWidth={2.5} />
+            <span className="hidden xs:inline font-mono text-[10px] uppercase tracking-wider">Fit</span>
+          </button>
+        )}
+
         {/* Angle Unit Badge / Toggle */}
         {angleUnit && onCycleAngleUnit && (
           <button

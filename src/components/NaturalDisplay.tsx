@@ -46,12 +46,9 @@ export const NaturalDisplay: React.FC<NaturalDisplayProps> = ({
         tabIndex={0}
         onClick={handleContainerClick}
         onKeyDown={onKeyDown}
-        className="w-full relative h-[210px] min-h-[210px] max-h-[210px] bg-[#eaf0e2] text-[#1c281d] flex flex-col justify-between p-3.5 sm:p-4 rounded-[14px] border border-[#d3ddcc] shadow-inner font-oryno-bold overflow-hidden outline-none shrink-0"
+        className="w-full relative flex-1 min-h-[140px] max-h-[220px] bg-[#eaf0e2] text-[#1c281d] flex flex-col justify-between p-3.5 sm:p-4 rounded-[14px] border border-[#d3ddcc] shadow-inner font-oryno-bold overflow-hidden outline-none"
         style={{
           boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.2)',
-          height: '210px',
-          minHeight: '210px',
-          maxHeight: '210px',
         }}
       >
         {/* Hidden input to handle desktop/mobile keyboard events */}

@@ -201,44 +201,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </div>
                   <div>
                     <div className="text-white font-bold text-xs flex items-center gap-1.5">
-                      Contact Developer
+                      Developer Support
                     </div>
                     <div className="text-neutral-400 text-[11px] mt-0.5">
-                      Direct feedback & technical support
+                      SHUBHAM Calculator Official Team
                     </div>
                   </div>
                 </div>
                 <a
-                  href="mailto:imshubhamk9@gmail.com"
+                  href="mailto:support@shubham-calculator.app"
                   className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs transition-all active:scale-95 shadow-xs"
                 >
-                  Email
+                  Contact
                 </a>
-              </div>
-              <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-[#0a0a0c] border border-neutral-800/80 font-mono text-[11px] text-amber-300">
-                <span className="select-all">imshubhamk9@gmail.com</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard?.writeText('imshubhamk9@gmail.com');
-                    setCopiedEmail(true);
-                    setTimeout(() => setCopiedEmail(false), 2000);
-                  }}
-                  className="text-neutral-400 hover:text-white flex items-center gap-1 text-[10px] pl-2 active:scale-95 transition-colors"
-                  title="Copy email to clipboard"
-                >
-                  {copiedEmail ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="text-emerald-400 font-sans">Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      <span className="font-sans">Copy</span>
-                    </>
-                  )}
-                </button>
               </div>
             </div>
           </div>

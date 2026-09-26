@@ -18,6 +18,7 @@ interface KeypadProps {
   onOpenSettings: () => void;
   onOpenOption: () => void;
   onTurnOn?: () => void;
+  keyHeight?: number;
 }
 
 let sharedAudioCtx: AudioContext | null = null;
@@ -44,7 +45,10 @@ export const Keypad: React.FC<KeypadProps> = ({
   onOpenSettings,
   onOpenOption,
   onTurnOn,
+  keyHeight = 44,
 }) => {
+  const btnStyle = keyHeight ? { height: `${keyHeight}px` } : undefined;
+
   const handleKey = (action: string, meta?: any) => {
     playVibration();
     onKeyPress(action, meta);
