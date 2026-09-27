@@ -45,33 +45,41 @@ export function decimalToFraction(val: number, maxDenominator = 10000): { n: num
   return null;
 }
 
+export interface SpecialExactValue {
+  value: number;
+  latex: string;
+  text: string;
+  n?: string;
+  d?: string;
+}
+
 /**
  * Format exact radical representation for standard angles/squares if possible
  */
-export function formatExactSpecialValues(val: number): string | null {
-  const eps = 1e-9;
+export function formatExactSpecialValues(val: number): SpecialExactValue | null {
+  const eps = 1e-7;
   // Check common sqrt multiples: sqrt(2)/2, sqrt(3)/2, sqrt(3), 1/sqrt(3), etc.
-  const specials: Array<{ value: number; latex: string; text: string }> = [
-    { value: Math.SQRT2 / 2, latex: '\\frac{\\sqrt{2}}{2}', text: '√2/2' },
-    { value: -Math.SQRT2 / 2, latex: '-\\frac{\\sqrt{2}}{2}', text: '-√2/2' },
-    { value: Math.sqrt(3) / 2, latex: '\\frac{\\sqrt{3}}{2}', text: '√3/2' },
-    { value: -Math.sqrt(3) / 2, latex: '-\\frac{\\sqrt{3}}{2}', text: '-√3/2' },
+  const specials: SpecialExactValue[] = [
+    { value: Math.SQRT2 / 2, latex: '\\frac{\\sqrt{2}}{2}', text: '√2/2', n: '√2', d: '2' },
+    { value: -Math.SQRT2 / 2, latex: '-\\frac{\\sqrt{2}}{2}', text: '-√2/2', n: '-√2', d: '2' },
+    { value: Math.sqrt(3) / 2, latex: '\\frac{\\sqrt{3}}{2}', text: '√3/2', n: '√3', d: '2' },
+    { value: -Math.sqrt(3) / 2, latex: '-\\frac{\\sqrt{3}}{2}', text: '-√3/2', n: '-√3', d: '2' },
     { value: Math.SQRT2, latex: '\\sqrt{2}', text: '√2' },
     { value: -Math.SQRT2, latex: '-\\sqrt{2}', text: '-√2' },
     { value: Math.sqrt(3), latex: '\\sqrt{3}', text: '√3' },
     { value: -Math.sqrt(3), latex: '-\\sqrt{3}', text: '-√3' },
-    { value: 1 / Math.sqrt(3), latex: '\\frac{\\sqrt{3}}{3}', text: '√3/3' },
-    { value: -1 / Math.sqrt(3), latex: '-\\frac{\\sqrt{3}}{3}', text: '-√3/3' },
+    { value: 1 / Math.sqrt(3), latex: '\\frac{\\sqrt{3}}{3}', text: '√3/3', n: '√3', d: '3' },
+    { value: -1 / Math.sqrt(3), latex: '-\\frac{\\sqrt{3}}{3}', text: '-√3/3', n: '-√3', d: '3' },
     { value: Math.PI, latex: '\\pi', text: 'π' },
     { value: 2 * Math.PI, latex: '2\\pi', text: '2π' },
-    { value: Math.PI / 2, latex: '\\frac{\\pi}{2}', text: 'π/2' },
-    { value: Math.PI / 4, latex: '\\frac{\\pi}{4}', text: 'π/4' },
+    { value: Math.PI / 2, latex: '\\frac{\\pi}{2}', text: 'π/2', n: 'π', d: '2' },
+    { value: Math.PI / 4, latex: '\\frac{\\pi}{4}', text: 'π/4', n: 'π', d: '4' },
     { value: Math.E, latex: 'e', text: 'e' },
   ];
 
   for (const s of specials) {
     if (Math.abs(val - s.value) < eps) {
-      return s.latex;
+      return s;
     }
   }
   return null;
@@ -368,16 +376,16 @@ export function evaluateMath(
       }
 
       // Check special radical/pi/e values
-      const specialLatex = formatExactSpecialValues(num);
+      const special = formatExactSpecialValues(num);
 
       // Check fraction conversion
       const frac = decimalToFraction(num);
       let exactStr = num.toString();
       let latexStr = num.toString();
 
-      if (specialLatex) {
-        latexStr = specialLatex;
-        exactStr = specialLatex;
+      if (special) {
+        latexStr = special.latex;
+        exactStr = special.text;
       } else if (frac && frac.d > 1) {
         exactStr = `${frac.n}/${frac.d}`;
         latexStr = `\\frac{${frac.n}}{${frac.d}}`;

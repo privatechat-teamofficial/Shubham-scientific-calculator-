@@ -11,7 +11,7 @@ interface HeaderProps {
   onCycleAngleUnit?: () => void;
   onOpenHistory: () => void;
   onOpenVariables?: () => void;
-  onOpenCamera: () => void;
+  onOpenCamera?: () => void;
   onOpenGraph: () => void;
   onOpenSettings: () => void;
   onOpenSolver?: () => void;
@@ -24,7 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
   onCycleAngleUnit,
   onOpenHistory,
   onOpenVariables: _onOpenVariables,
-  onOpenCamera,
+  onOpenCamera: _onOpenCamera,
   onOpenGraph,
   onOpenSettings,
   onOpenSolver: _onOpenSolver,
@@ -33,10 +33,10 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   return (
     <header className="w-full bg-[#000000] border-b border-neutral-800/80 text-slate-100 px-3 py-2 flex items-center justify-between select-none">
-      {/* Brand: older icon size (w-8 h-8) with larger inside Sigma Σ, and only SHUBHAM text */}
+      {/* Brand: exact amber rounded badge matching top-left in-app logo */}
       <div className="flex items-center gap-2.5">
         <div 
-          className="w-8 h-8 rounded-[8px] bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 flex items-center justify-center shadow-sm shadow-amber-500/35 ring-1.5 ring-amber-300/60 shrink-0 select-none cursor-default"
+          className="w-8 h-8 rounded-[8px] bg-[#f59e0b] flex items-center justify-center shadow-sm shadow-amber-500/35 ring-1.5 ring-amber-300/60 shrink-0 select-none cursor-default"
           title="SHUBHAM Scientific Calculator"
         >
           <span className="text-black font-black text-xl select-none leading-none -translate-y-[0.5px]">Σ</span>

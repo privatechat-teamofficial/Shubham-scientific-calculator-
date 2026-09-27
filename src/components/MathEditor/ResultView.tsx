@@ -8,6 +8,23 @@ interface ResultViewProps {
   onToggleDisplayMode?: () => void;
 }
 
+// Helper to convert any raw LaTeX escape sequences to clean unicode representation
+const cleanLatexToUnicode = (str: string): string => {
+  if (!str) return '';
+  return str
+    .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '$1/$2')
+    .replace(/\\sqrt\{([^}]+)\}/g, '√$1')
+    .replace(/\\sqrt(\d+)/g, '√$1')
+    .replace(/\\pi/g, 'π')
+    .replace(/\\text\{([^}]+)\}/g, '$1')
+    .replace(/\\times/g, '×')
+    .replace(/\\div/g, '÷')
+    .replace(/\\pm/g, '±')
+    .replace(/\\cdot/g, '·')
+    .replace(/\\/g, '')
+    .trim();
+};
+
 export const ResultView: React.FC<ResultViewProps> = ({
   result,
   displayMode = 'EXACT',
@@ -19,37 +36,45 @@ export const ResultView: React.FC<ResultViewProps> = ({
     return (
       <div className="flex flex-col items-end justify-center font-oryno-bold select-text text-right">
         <span className="text-red-700 font-bold tracking-wider text-base sm:text-lg">
-          {result.exact}
+          {cleanLatexToUnicode(result.exact)}
         </span>
       </div>
     );
   }
 
-  // Check if exact result is a fraction (e.g. "4103201/2070" or "\frac{...}{...}")
+  // Check if exact result is a fraction (e.g. "√2/2" or "3/4" or "\frac{...}{...}")
   let fractionParts: { n: string; d: string } | null = null;
   if (displayMode !== 'DECIMAL' && result.exact && result.exact.includes('/') && !result.exact.startsWith('\\')) {
     const slashIdx = result.exact.indexOf('/');
-    const n = result.exact.substring(0, slashIdx).trim();
-    const d = result.exact.substring(slashIdx + 1).trim();
+    const n = cleanLatexToUnicode(result.exact.substring(0, slashIdx));
+    const d = cleanLatexToUnicode(result.exact.substring(slashIdx + 1));
     if (n && d) {
       fractionParts = { n, d };
     }
   } else if (displayMode !== 'DECIMAL' && result.latex && result.latex.includes('\\frac{')) {
     const match = result.latex.match(/\\frac\{([^}]+)\}\{([^}]+)\}/);
     if (match) {
-      fractionParts = { n: match[1], d: match[2] };
+      fractionParts = { 
+        n: cleanLatexToUnicode(match[1]), 
+        d: cleanLatexToUnicode(match[2]) 
+      };
     }
   }
 
   // Format large numbers with thin spaces
   const formatNumberWithSpaces = (numStr: string) => {
-    if (!numStr || isNaN(Number(numStr.replace(/\s/g, '')))) return numStr;
-    const parts = numStr.split('.');
+    if (!numStr) return '';
+    const cleaned = cleanLatexToUnicode(numStr);
+    if (isNaN(Number(cleaned.replace(/\s/g, '')))) return cleaned;
+    const parts = cleaned.split('.');
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     return parts.join('.');
   };
 
-  const displayText = displayMode === 'DECIMAL' ? (result.decimal || result.exact) : result.exact;
+  const displayText = displayMode === 'DECIMAL' 
+    ? (result.decimal || cleanLatexToUnicode(result.exact)) 
+    : cleanLatexToUnicode(result.exact);
+
   const showDecimalUnderneath = displayMode !== 'DECIMAL' && fractionParts && result.decimal && result.decimal !== result.exact;
 
   return (
