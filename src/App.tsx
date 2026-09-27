@@ -1002,12 +1002,12 @@ export default function App() {
 
   return (
     <div 
-      className={`min-h-[100dvh] h-full w-full max-w-[420px] mx-auto bg-[#000000] text-slate-100 flex flex-col justify-between select-none shadow-2xl relative overflow-x-hidden overflow-y-auto font-oryno-bold transition-opacity duration-300 ease-out ${isReady ? 'opacity-100' : 'opacity-0'}`}
+      className={`min-h-screen w-full bg-[#000000] text-slate-100 flex flex-col items-center justify-start select-none shadow-2xl relative overflow-x-hidden font-oryno-bold transition-opacity duration-300 ease-out ${isReady ? 'opacity-100' : 'opacity-0'}`}
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
-      {/* Top Main Calculator Viewport */}
-      <div className="flex-1 flex flex-col bg-[#000000]">
+      {/* Unified Mobile Calculator Shell */}
+      <div className="w-full max-w-[420px] flex flex-col bg-[#000000] pb-2 sm:pb-4">
         {/* Header with App Branding and Utility Modals */}
         <Header
           onOpenHistory={() => setIsHistoryOpen(true)}
@@ -1052,8 +1052,8 @@ export default function App() {
           canRedo={redoStack.length > 0}
         />
 
-        {/* ClassWiz Keypad */}
-        <div className="flex-1 flex flex-col justify-end bg-[#000000] pb-2 sm:pb-3">
+        {/* ClassWiz Keypad directly below Status Bar */}
+        <div className="w-full bg-[#000000] pt-0.5">
           <Keypad
             isShift={isShift}
             isAlpha={isAlpha}
