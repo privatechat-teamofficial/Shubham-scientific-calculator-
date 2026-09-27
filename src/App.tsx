@@ -1007,7 +1007,7 @@ export default function App() {
       tabIndex={0}
     >
       {/* Unified Mobile Calculator Shell */}
-      <div className="w-full max-w-[420px] flex flex-col bg-[#000000] pb-2 sm:pb-4">
+      <div className="w-full max-w-[400px] flex flex-col bg-[#000000] pb-2">
         {/* Header with App Branding and Utility Modals */}
         <Header
           onOpenHistory={() => setIsHistoryOpen(true)}

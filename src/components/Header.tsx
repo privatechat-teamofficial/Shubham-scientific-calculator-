@@ -3,16 +3,12 @@ import {
   History, 
   TrendingUp, 
   MoreVertical, 
-  Maximize2,
-  Minimize2,
 } from 'lucide-react';
 import { AngleUnit } from '../types';
 
 interface HeaderProps {
   angleUnit?: AngleUnit;
   onCycleAngleUnit?: () => void;
-  fitToScreen?: boolean;
-  onToggleFitToScreen?: () => void;
   onOpenHistory: () => void;
   onOpenVariables?: () => void;
   onOpenCamera: () => void;
@@ -26,8 +22,6 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   angleUnit,
   onCycleAngleUnit,
-  fitToScreen,
-  onToggleFitToScreen,
   onOpenHistory,
   onOpenVariables: _onOpenVariables,
   onOpenCamera,
@@ -38,7 +32,7 @@ export const Header: React.FC<HeaderProps> = ({
   historyCount,
 }) => {
   return (
-    <header className="w-full bg-[#000000] border-b border-neutral-800/80 text-slate-100 px-0 py-2 sm:py-2.5 flex items-center justify-between select-none">
+    <header className="w-full bg-[#000000] border-b border-neutral-800/80 text-slate-100 px-3 py-2 flex items-center justify-between select-none">
       {/* Brand: older icon size (w-8 h-8) with larger inside Sigma Σ, and only SHUBHAM text */}
       <div className="flex items-center gap-2.5">
         <div 
@@ -47,13 +41,13 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <span className="text-black font-black text-xl select-none leading-none -translate-y-[0.5px]">Σ</span>
         </div>
-        <span className="tracking-wider font-extrabold text-[16px] sm:text-[17px] font-oryno-bold text-white leading-none">
+        <span className="tracking-wider font-extrabold text-[16px] font-oryno-bold text-white leading-none">
           SHUBHAM
         </span>
       </div>
 
       {/* Top action icons sized proportionately to the brand badge */}
-      <div className="flex items-center gap-1.5 sm:gap-2">
+      <div className="flex items-center gap-1.5">
         {/* Angle Unit Badge / Toggle */}
         {angleUnit && onCycleAngleUnit && (
           <button
@@ -66,34 +60,14 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         )}
 
-        {/* Fit to Screen Quick Toggle */}
-        {onToggleFitToScreen && (
-          <button
-            id="btn-fit-screen"
-            onClick={onToggleFitToScreen}
-            title={fitToScreen ? "Exit Fit to Screen (Standard View)" : "Fit to Screen"}
-            className={`p-1.5 sm:p-2 rounded-lg border transition-all active:scale-95 ${
-              fitToScreen
-                ? 'bg-amber-500/20 text-amber-400 border-amber-500/40 shadow-xs'
-                : 'bg-[#18181b] text-slate-200 hover:text-amber-300 hover:bg-[#27272a] border-neutral-800'
-            }`}
-          >
-            {fitToScreen ? (
-              <Minimize2 className="w-[18px] h-[18px] sm:w-[19px] sm:h-[19px]" strokeWidth={2.4} />
-            ) : (
-              <Maximize2 className="w-[18px] h-[18px] sm:w-[19px] sm:h-[19px]" strokeWidth={2.4} />
-            )}
-          </button>
-        )}
-
         {/* History Button */}
         <button
           id="btn-open-history"
           onClick={onOpenHistory}
           title="Calculation History"
-          className="relative p-1.5 sm:p-2 rounded-lg bg-[#18181b] text-slate-200 hover:text-amber-300 hover:bg-[#27272a] border border-neutral-800 active:scale-95 transition-all"
+          className="relative p-1.5 rounded-lg bg-[#18181b] text-slate-200 hover:text-amber-300 hover:bg-[#27272a] border border-neutral-800 active:scale-95 transition-all"
         >
-          <History className="w-[18px] h-[18px] sm:w-[19px] sm:h-[19px]" strokeWidth={2.4} />
+          <History className="w-[18px] h-[18px]" strokeWidth={2.4} />
           {historyCount > 0 && (
             <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-amber-400 ring-1 ring-black"></span>
           )}
@@ -104,9 +78,9 @@ export const Header: React.FC<HeaderProps> = ({
           id="btn-open-graph"
           onClick={onOpenGraph}
           title="2D Function Graph Plotter"
-          className="p-1.5 sm:p-2 rounded-lg bg-[#18181b] text-slate-200 hover:text-amber-300 hover:bg-[#27272a] border border-neutral-800 active:scale-95 transition-all"
+          className="p-1.5 rounded-lg bg-[#18181b] text-slate-200 hover:text-amber-300 hover:bg-[#27272a] border border-neutral-800 active:scale-95 transition-all"
         >
-          <TrendingUp className="w-[18px] h-[18px] sm:w-[19px] sm:h-[19px]" strokeWidth={2.4} />
+          <TrendingUp className="w-[18px] h-[18px]" strokeWidth={2.4} />
         </button>
 
         {/* Settings / More Menu */}
@@ -114,9 +88,9 @@ export const Header: React.FC<HeaderProps> = ({
           id="btn-open-settings"
           onClick={onOpenSettings}
           title="Settings & Options"
-          className="p-1.5 sm:p-2 rounded-lg bg-[#18181b] text-slate-200 hover:text-amber-300 hover:bg-[#27272a] border border-neutral-800 active:scale-95 transition-all"
+          className="p-1.5 rounded-lg bg-[#18181b] text-slate-200 hover:text-amber-300 hover:bg-[#27272a] border border-neutral-800 active:scale-95 transition-all"
         >
-          <MoreVertical className="w-[18px] h-[18px] sm:w-[19px] sm:h-[19px]" strokeWidth={2.4} />
+          <MoreVertical className="w-[18px] h-[18px]" strokeWidth={2.4} />
         </button>
       </div>
     </header>
