@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Sliders, Volume2, Type, Mail, Check, Copy, Maximize2 } from 'lucide-react';
+import { X, Sliders, Volume2, Type, Mail, Check, Copy } from 'lucide-react';
 import { AngleUnit, FractionFormat, NumberFormat } from '../types';
 
 interface SettingsModalProps {
@@ -15,8 +15,6 @@ interface SettingsModalProps {
   onSetFontSize: (size: number) => void;
   audioFeedback: boolean;
   onSetAudioFeedback: (enabled: boolean) => void;
-  fitToScreen?: boolean;
-  onToggleFitToScreen?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -32,8 +30,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onSetFontSize,
   audioFeedback,
   onSetAudioFeedback,
-  fitToScreen = false,
-  onToggleFitToScreen,
 }) => {
   const [copiedEmail, setCopiedEmail] = useState(false);
   if (!isOpen) return null;
@@ -195,51 +191,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             />
           </div>
 
-          {/* Fit to Screen Option */}
-          {onToggleFitToScreen && (
-            <div className="flex items-center justify-between p-3 rounded-xl bg-[#141416] border border-neutral-800">
-              <div className="flex items-center gap-2.5">
-                <div className="p-1 rounded-md bg-amber-500/20 text-amber-400">
-                  <Maximize2 className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-neutral-200 font-bold">Fit to Screen</div>
-                  <div className="text-neutral-500 text-[11px]">Lock calculator directly to window height</div>
-                </div>
-              </div>
-              <input
-                type="checkbox"
-                checked={fitToScreen}
-                onChange={onToggleFitToScreen}
-                className="w-5 h-5 accent-amber-500 rounded cursor-pointer"
-              />
-            </div>
-          )}
-
           {/* Contact Developer */}
           <div className="pt-1">
-            <div className="bg-[#141416] border border-neutral-800 rounded-xl p-3.5 flex flex-col gap-2.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 shrink-0">
-                    <Mail className="w-4 h-4" />
+            <div className="bg-[#141416] border border-neutral-800 rounded-xl p-3.5 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 shrink-0">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-white font-bold text-xs flex items-center gap-1.5">
+                    Contact Developer
                   </div>
-                  <div>
-                    <div className="text-white font-bold text-xs flex items-center gap-1.5">
-                      Developer Support
-                    </div>
-                    <div className="text-neutral-400 text-[11px] mt-0.5">
-                      SHUBHAM Calculator Official Team
-                    </div>
+                  <div className="text-neutral-400 text-[11px] mt-0.5">
+                    Direct feedback & technical support
                   </div>
                 </div>
-                <a
-                  href="mailto:support@shubham-calculator.app"
-                  className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs transition-all active:scale-95 shadow-xs"
-                >
-                  Contact
-                </a>
               </div>
+              <a
+                href="mailto:imshubhamk9@gmail.com"
+                className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs transition-all active:scale-95 shadow-xs"
+              >
+                Email
+              </a>
             </div>
           </div>
         </div>

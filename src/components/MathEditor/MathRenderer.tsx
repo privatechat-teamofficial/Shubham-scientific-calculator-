@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
 import { CursorPath, CursorStep, FractionNode, MathNode, MathSequence } from '../../lib/ast/types';
 
 export const BASE_FONT_SIZE = 26; // Fixed base mathematical typography size in px
@@ -19,36 +19,83 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
   onSetCursor,
   fontSize = BASE_FONT_SIZE,
 }) => {
-  const cursorRef = useRef<HTMLSpanElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cursorAnchorRef = useRef<HTMLSpanElement>(null);
 
-  // Auto-scroll to keep cursor in view in both horizontal (X) and vertical (Y) directions
-  useEffect(() => {
-    if (cursorRef.current) {
-      const scrollParent = cursorRef.current.closest('.math-scroll-container') as HTMLElement | null;
-      if (scrollParent) {
-        const cursorRect = cursorRef.current.getBoundingClientRect();
-        const parentRect = scrollParent.getBoundingClientRect();
-        
-        // Horizontal scroll (left / right)
-        if (cursorRect.right > parentRect.right - 24) {
-          scrollParent.scrollLeft += (cursorRect.right - parentRect.right + 40);
-        } else if (cursorRect.left < parentRect.left + 24) {
-          scrollParent.scrollLeft -= (parentRect.left - cursorRect.left + 40);
-        }
+  const [cursorLayout, setCursorLayout] = useState<{
+    x: number;
+    y: number;
+    height: number;
+    visible: boolean;
+  }>({
+    x: 0,
+    y: 0,
+    height: Math.round(fontSize * 0.76),
+    visible: false,
+  });
 
-        // Vertical scroll (up / down)
-        if (cursorRect.bottom > parentRect.bottom - 12) {
-          scrollParent.scrollTop += (cursorRect.bottom - parentRect.bottom + 24);
-        } else if (cursorRect.top < parentRect.top + 12) {
-          scrollParent.scrollTop -= (parentRect.top - cursorRect.top + 24);
-        }
+  const updateCursorPosition = useCallback(() => {
+    const anchor = cursorAnchorRef.current;
+    const container = containerRef.current;
+    if (!anchor || !container) {
+      setCursorLayout((prev) => (prev.visible ? { ...prev, visible: false } : prev));
+      return;
+    }
+
+    const anchorRect = anchor.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+
+    // Exact insertion-point X position measured from rendered text metrics
+    const x = anchorRect.left - containerRect.left;
+
+    // Get active font size from the anchor element to handle nested fractions/exponents
+    const anchorStyle = window.getComputedStyle(anchor);
+    const activeFontSize = parseFloat(anchorStyle.fontSize) || fontSize;
+
+    // Consistent digit cap-height: matches 0-9 digits precisely
+    const cursorHeight = Math.round(activeFontSize * 0.76);
+
+    // Anchor bottom edge sits on the text baseline (vertical-align: baseline)
+    const baselineY = anchorRect.bottom - containerRect.top;
+    const y = Math.round(baselineY - cursorHeight);
+
+    setCursorLayout({
+      x: Math.round(x * 10) / 10,
+      y: y,
+      height: cursorHeight,
+      visible: true,
+    });
+
+    // Auto-scroll math scroll container when cursor moves near edges
+    const scrollParent = container.closest('.math-scroll-container') as HTMLElement | null;
+    if (scrollParent) {
+      const parentRect = scrollParent.getBoundingClientRect();
+      if (anchorRect.right > parentRect.right - 24) {
+        scrollParent.scrollLeft += (anchorRect.right - parentRect.right + 40);
+      } else if (anchorRect.left < parentRect.left + 24) {
+        scrollParent.scrollLeft -= (parentRect.left - anchorRect.left + 40);
+      }
+
+      if (anchorRect.bottom > parentRect.bottom - 12) {
+        scrollParent.scrollTop += (anchorRect.bottom - parentRect.bottom + 24);
+      } else if (anchorRect.top < parentRect.top + 12) {
+        scrollParent.scrollTop -= (parentRect.top - anchorRect.top + 24);
       }
     }
-  }, [cursor, sequence]);
+  }, [fontSize]);
+
+  useLayoutEffect(() => {
+    updateCursorPosition();
+  }, [cursor, sequence, fontSize, updateCursorPosition]);
+
+  useEffect(() => {
+    updateCursorPosition();
+  }, [cursor, sequence, fontSize, updateCursorPosition]);
 
   return (
     <div 
-      className="inline-flex items-center whitespace-nowrap flex-nowrap min-h-[1.6em] text-[#0f172a] font-oryno-input font-medium select-none"
+      ref={containerRef}
+      className="relative inline-flex items-center whitespace-nowrap flex-nowrap min-h-[1.6em] text-[#0f172a] font-oryno-input font-medium select-none"
       style={{ 
         fontSize: `${fontSize}px`,
         lineHeight: 1.2,
@@ -58,10 +105,27 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
         sequence={sequence}
         steps={[]}
         cursor={cursor}
-        cursorRef={cursorRef}
+        cursorAnchorRef={cursorAnchorRef}
         onSetCursor={onSetCursor}
         depth={0}
       />
+
+      {/* Separate Custom Visual Cursor Element: Fixed 2px width, exact baseline height and position */}
+      {cursorLayout.visible && (
+        <span
+          className="absolute pointer-events-none select-none z-20"
+          style={{
+            position: 'absolute',
+            left: `${cursorLayout.x}px`,
+            top: `${cursorLayout.y}px`,
+            width: '2px', // strictly fixed width
+            height: `${cursorLayout.height}px`, // consistent height matching digits
+            backgroundColor: '#2563eb', // exact current cursor color bg-blue-600
+            animation: 'sharpCursorBlink 0.85s step-start infinite',
+            transform: 'translateX(-1px)', // centered on insertion point
+          }}
+        />
+      )}
     </div>
   );
 };
@@ -70,7 +134,7 @@ interface SequenceRendererProps {
   sequence: MathSequence;
   steps: CursorStep[];
   cursor: CursorPath;
-  cursorRef: React.RefObject<HTMLSpanElement | null>;
+  cursorAnchorRef: React.RefObject<any>;
   onSetCursor: (path: CursorPath) => void;
   depth?: number;
 }
@@ -79,7 +143,7 @@ const SequenceRenderer: React.FC<SequenceRendererProps> = ({
   sequence,
   steps,
   cursor,
-  cursorRef,
+  cursorAnchorRef,
   onSetCursor,
   depth = 0,
 }) => {
@@ -87,20 +151,24 @@ const SequenceRenderer: React.FC<SequenceRendererProps> = ({
 
   // Empty sequence handling
   if (sequence.length === 0) {
-    // Root level expression area: NO box, only the crisp blinking vertical cursor line
+    // Root level expression area: invisible strut to establish the digit baseline
     if (depth === 0) {
       return (
         <span 
-          className="inline-flex items-center justify-center h-[1em] select-none cursor-pointer"
+          className="inline-flex items-baseline select-none cursor-pointer"
           onClick={(e) => {
             e.stopPropagation();
             onSetCursor({ steps, index: 0 });
           }}
         >
-          <span 
-            ref={cursorRef as any} 
-            className="inline-block w-[2px] h-[0.72em] bg-blue-600 animate-cursor-blink align-middle -translate-y-[2.5px]" 
-          />
+          <span className="invisible select-none inline-block w-0 overflow-hidden leading-none pointer-events-none">0</span>
+          {isCurrentSequence && cursor.index === 0 && (
+            <span 
+              ref={cursorAnchorRef} 
+              data-cursor-anchor="true"
+              style={{ display: 'inline-block', width: 0, height: 0, margin: 0, padding: 0, verticalAlign: 'baseline', pointerEvents: 'none' }} 
+            />
+          )}
         </span>
       );
     }
@@ -117,8 +185,9 @@ const SequenceRenderer: React.FC<SequenceRendererProps> = ({
         >
           <span className="inline-block w-full h-full border-2 border-dashed border-blue-500/90 rounded-[2px] bg-blue-100/30" />
           <span 
-            ref={cursorRef as any} 
-            className="absolute top-1/2 left-1/2 -translate-y-[68%] -translate-x-1/2 w-[2px] h-[0.68em] bg-blue-600 animate-cursor-blink pointer-events-none" 
+            ref={cursorAnchorRef} 
+            data-cursor-anchor="true"
+            style={{ display: 'inline-block', width: 0, height: 0, margin: 0, padding: 0, verticalAlign: 'baseline', pointerEvents: 'none' }} 
           />
         </span>
       );
@@ -139,14 +208,13 @@ const SequenceRenderer: React.FC<SequenceRendererProps> = ({
 
   return (
     <span className="inline-flex items-center align-middle whitespace-nowrap">
-      {/* Zero-displacement cursor before first element */}
+      {/* Zero-displacement anchor before first element */}
       {isCurrentSequence && cursor.index === 0 && (
-        <span className="relative inline-flex items-center justify-center w-0 h-[1em] overflow-visible z-10 select-none pointer-events-none">
-          <span 
-            ref={cursorRef as any} 
-            className="absolute top-1/2 left-0 -translate-y-[68%] -translate-x-1/2 w-[2px] h-[0.72em] bg-blue-600 animate-cursor-blink pointer-events-none" 
-          />
-        </span>
+        <span 
+          ref={cursorAnchorRef} 
+          data-cursor-anchor="true"
+          style={{ display: 'inline-block', width: 0, height: 0, margin: 0, padding: 0, verticalAlign: 'baseline', pointerEvents: 'none' }} 
+        />
       )}
 
       {sequence.map((node, i) => (
@@ -155,20 +223,19 @@ const SequenceRenderer: React.FC<SequenceRendererProps> = ({
             node={node}
             steps={steps}
             cursor={cursor}
-            cursorRef={cursorRef}
+            cursorAnchorRef={cursorAnchorRef}
             onSetCursor={onSetCursor}
             index={i}
             depth={depth}
           />
 
-          {/* Zero-displacement cursor after this node */}
+          {/* Zero-displacement anchor after this node */}
           {isCurrentSequence && cursor.index === i + 1 && (
-            <span className="relative inline-flex items-center justify-center w-0 h-[1em] overflow-visible z-10 select-none pointer-events-none">
-              <span 
-                ref={cursorRef as any} 
-                className="absolute top-1/2 left-0 -translate-y-[68%] -translate-x-1/2 w-[2px] h-[0.72em] bg-blue-600 animate-cursor-blink pointer-events-none" 
-              />
-            </span>
+            <span 
+              ref={cursorAnchorRef} 
+              data-cursor-anchor="true"
+              style={{ display: 'inline-block', width: 0, height: 0, margin: 0, padding: 0, verticalAlign: 'baseline', pointerEvents: 'none' }} 
+            />
           )}
         </React.Fragment>
       ))}
@@ -180,7 +247,7 @@ interface NodeRendererProps {
   node: MathNode;
   steps: CursorStep[];
   cursor: CursorPath;
-  cursorRef: React.RefObject<HTMLSpanElement | null>;
+  cursorAnchorRef: React.RefObject<any>;
   onSetCursor: (path: CursorPath) => void;
   index: number;
   depth: number;
@@ -190,7 +257,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({
   node,
   steps,
   cursor,
-  cursorRef,
+  cursorAnchorRef,
   onSetCursor,
   index,
   depth,
@@ -244,7 +311,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({
           node={node}
           steps={steps}
           cursor={cursor}
-          cursorRef={cursorRef}
+          cursorAnchorRef={cursorAnchorRef}
           onSetCursor={onSetCursor}
           depth={depth}
         />
@@ -266,7 +333,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({
               sequence={node.base}
               steps={[...steps, { nodeId: node.id, slot: 'base' }]}
               cursor={cursor}
-              cursorRef={cursorRef}
+              cursorAnchorRef={cursorAnchorRef}
               onSetCursor={onSetCursor}
               depth={depth}
             />
@@ -285,7 +352,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({
               sequence={node.exponent}
               steps={[...steps, { nodeId: node.id, slot: 'exponent' }]}
               cursor={cursor}
-              cursorRef={cursorRef}
+              cursorAnchorRef={cursorAnchorRef}
               onSetCursor={onSetCursor}
               depth={depth + 1}
             />
@@ -311,7 +378,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({
                 sequence={node.index}
                 steps={[...steps, { nodeId: node.id, slot: 'index' }]}
                 cursor={cursor}
-                cursorRef={cursorRef}
+                cursorAnchorRef={cursorAnchorRef}
                 onSetCursor={onSetCursor}
                 depth={depth + 1}
               />
@@ -332,7 +399,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({
               sequence={node.radicand}
               steps={[...steps, { nodeId: node.id, slot: 'radicand' }]}
               cursor={cursor}
-              cursorRef={cursorRef}
+              cursorAnchorRef={cursorAnchorRef}
               onSetCursor={onSetCursor}
               depth={depth}
             />
@@ -369,7 +436,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({
               sequence={node.args}
               steps={[...steps, { nodeId: node.id, slot: 'args' }]}
               cursor={cursor}
-              cursorRef={cursorRef}
+              cursorAnchorRef={cursorAnchorRef}
               onSetCursor={onSetCursor}
               depth={depth}
             />
@@ -397,7 +464,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({
               sequence={node.content}
               steps={[...steps, { nodeId: node.id, slot: 'content' }]}
               cursor={cursor}
-              cursorRef={cursorRef}
+              cursorAnchorRef={cursorAnchorRef}
               onSetCursor={onSetCursor}
               depth={depth}
             />
@@ -424,7 +491,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({
               sequence={node.content}
               steps={[...steps, { nodeId: node.id, slot: 'content' }]}
               cursor={cursor}
-              cursorRef={cursorRef}
+              cursorAnchorRef={cursorAnchorRef}
               onSetCursor={onSetCursor}
               depth={depth}
             />
@@ -447,7 +514,7 @@ interface FractionRendererProps {
   node: FractionNode;
   steps: CursorStep[];
   cursor: CursorPath;
-  cursorRef: React.RefObject<HTMLSpanElement | null>;
+  cursorAnchorRef: React.RefObject<any>;
   onSetCursor: (path: CursorPath) => void;
   depth: number;
 }
@@ -456,7 +523,7 @@ const FractionRenderer: React.FC<FractionRendererProps> = ({
   node,
   steps,
   cursor,
-  cursorRef,
+  cursorAnchorRef,
   onSetCursor,
   depth,
 }) => {
@@ -495,7 +562,7 @@ const FractionRenderer: React.FC<FractionRendererProps> = ({
           sequence={node.numerator}
           steps={[...steps, { nodeId: node.id, slot: 'numerator' }]}
           cursor={cursor}
-          cursorRef={cursorRef}
+          cursorAnchorRef={cursorAnchorRef}
           onSetCursor={onSetCursor}
           depth={depth + 1}
         />
@@ -528,7 +595,7 @@ const FractionRenderer: React.FC<FractionRendererProps> = ({
           sequence={node.denominator}
           steps={[...steps, { nodeId: node.id, slot: 'denominator' }]}
           cursor={cursor}
-          cursorRef={cursorRef}
+          cursorAnchorRef={cursorAnchorRef}
           onSetCursor={onSetCursor}
           depth={depth + 1}
         />
