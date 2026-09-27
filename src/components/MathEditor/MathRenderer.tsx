@@ -21,17 +21,26 @@ export const MathRenderer: React.FC<MathRendererProps> = ({
 }) => {
   const cursorRef = useRef<HTMLSpanElement>(null);
 
-  // Horizontal-only auto-scroll to keep cursor in view without any vertical movement
+  // Auto-scroll to keep cursor in view in both horizontal (X) and vertical (Y) directions
   useEffect(() => {
     if (cursorRef.current) {
       const scrollParent = cursorRef.current.closest('.math-scroll-container') as HTMLElement | null;
       if (scrollParent) {
         const cursorRect = cursorRef.current.getBoundingClientRect();
         const parentRect = scrollParent.getBoundingClientRect();
+        
+        // Horizontal scroll (left / right)
         if (cursorRect.right > parentRect.right - 24) {
           scrollParent.scrollLeft += (cursorRect.right - parentRect.right + 40);
         } else if (cursorRect.left < parentRect.left + 24) {
           scrollParent.scrollLeft -= (parentRect.left - cursorRect.left + 40);
+        }
+
+        // Vertical scroll (up / down)
+        if (cursorRect.bottom > parentRect.bottom - 12) {
+          scrollParent.scrollTop += (cursorRect.bottom - parentRect.bottom + 24);
+        } else if (cursorRect.top < parentRect.top + 12) {
+          scrollParent.scrollTop -= (parentRect.top - cursorRect.top + 24);
         }
       }
     }
@@ -451,13 +460,9 @@ const FractionRenderer: React.FC<FractionRendererProps> = ({
   onSetCursor,
   depth,
 }) => {
-  // Only nested fractions inside another fraction (depth >= 2) scale slightly (0.85em)
-  // Standard top-level fractions retain 100% full base font size!
-  const isDeeplyNested = depth >= 2;
-
   return (
     <div 
-      className={`inline-flex flex-col items-center justify-center align-middle mx-0.5 my-0 cursor-pointer select-none ${isDeeplyNested ? 'text-[0.85em]' : 'text-[1em]'}`}
+      className="inline-flex flex-col items-center justify-center align-middle mx-[1px] my-0 cursor-pointer select-none text-[1em]"
       style={{
         verticalAlign: 'middle',
       }}
@@ -469,14 +474,14 @@ const FractionRenderer: React.FC<FractionRendererProps> = ({
         });
       }}
     >
-      {/* Numerator: EXACT same font size, clean medium weight to match natural display */}
+      {/* Numerator: EXACT same font size, decreased compact spacing to fraction bar */}
       <div 
-        className="w-full flex items-center justify-center text-center px-1 font-oryno-input font-medium leading-none"
+        className="w-full flex items-center justify-center text-center px-0.5 font-oryno-input font-medium leading-none"
         style={{
+          paddingTop: '0px',
           paddingBottom: '0px',
-          marginBottom: '-1px',
-          paddingTop: '2px',
-          minHeight: '1.05em',
+          marginBottom: '0px',
+          minHeight: '0.92em',
         }}
         onClick={(e) => {
           e.stopPropagation();
@@ -496,19 +501,20 @@ const FractionRenderer: React.FC<FractionRendererProps> = ({
         />
       </div>
 
-      {/* Horizontal Fraction Bar: 1.75px fixed thickness, auto-width matching widest term */}
+      {/* Horizontal Fraction Bar: 1.5px fixed thickness, auto-width matching widest term */}
       <div 
-        className="w-full bg-[#0f172a] rounded-full min-w-[16px] my-0" 
-        style={{ height: '1.75px' }}
+        className="w-full bg-[#0f172a] rounded-full min-w-[14px] my-0 shrink-0" 
+        style={{ height: '1.5px' }}
       />
 
-      {/* Denominator: EXACT same font size, clean medium weight to match natural display */}
+      {/* Denominator: EXACT same font size, symmetrical 2px spacing to fraction bar */}
       <div 
-        className="w-full flex items-center justify-center text-center px-1 font-oryno-input font-medium leading-none"
+        className="w-full flex items-center justify-center text-center px-0.5 font-oryno-input font-medium leading-none"
         style={{
           paddingTop: '2px',
-          paddingBottom: '2px',
-          minHeight: '1.05em',
+          paddingBottom: '1px',
+          marginTop: '0px',
+          minHeight: '1em',
         }}
         onClick={(e) => {
           e.stopPropagation();

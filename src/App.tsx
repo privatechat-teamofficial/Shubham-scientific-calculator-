@@ -1002,7 +1002,7 @@ export default function App() {
 
   return (
     <div 
-      className={`min-h-screen h-full w-full max-w-none sm:max-w-md mx-auto bg-[#000000] text-slate-100 flex flex-col justify-between select-none shadow-2xl relative overflow-x-hidden overflow-y-auto font-oryno-bold transition-opacity duration-300 ease-out ${isReady ? 'opacity-100' : 'opacity-0'}`}
+      className={`min-h-[100dvh] h-full w-full max-w-[420px] mx-auto bg-[#000000] text-slate-100 flex flex-col justify-between select-none shadow-2xl relative overflow-x-hidden overflow-y-auto font-oryno-bold transition-opacity duration-300 ease-out ${isReady ? 'opacity-100' : 'opacity-0'}`}
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
@@ -1052,8 +1052,8 @@ export default function App() {
           canRedo={redoStack.length > 0}
         />
 
-        {/* ClassWiz Keypad - seamlessly connected directly below Status Bar */}
-        <div className="w-full bg-[#000000] pb-2 sm:pb-3 shrink-0">
+        {/* ClassWiz Keypad */}
+        <div className="flex-1 flex flex-col justify-end bg-[#000000] pb-2 sm:pb-3">
           <Keypad
             isShift={isShift}
             isAlpha={isAlpha}
