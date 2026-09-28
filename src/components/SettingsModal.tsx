@@ -207,12 +207,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </div>
                 </div>
               </div>
-              <a
-                href="mailto:imshubhamk9@gmail.com"
-                className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs transition-all active:scale-95 shadow-xs"
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const mailtoUrl = 'mailto:imshubhamk9@gmail.com?subject=SHUBHAM%20Calculator%20Feedback';
+                  try {
+                    // Safe intent trigger for Android WebView & iOS
+                    const ifr = document.createElement('iframe');
+                    ifr.style.display = 'none';
+                    ifr.src = mailtoUrl;
+                    document.body.appendChild(ifr);
+                    setTimeout(() => {
+                      try { document.body.removeChild(ifr); } catch {}
+                    }, 1500);
+                  } catch {}
+                  try {
+                    window.open(mailtoUrl, '_system');
+                  } catch {}
+                }}
+                className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs transition-all active:scale-95 shadow-xs cursor-pointer"
               >
                 Email
-              </a>
+              </button>
             </div>
           </div>
         </div>
