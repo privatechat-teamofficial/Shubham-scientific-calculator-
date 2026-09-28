@@ -3,11 +3,13 @@
 Generates the exact logo assets matching the user's provided logo:
 - Vibrant golden-amber squircle background (#FFA800)
 - Exact black Greek Capital Sigma (Σ) glyph with serif teeth and center vertex
+Updates all web icons, favicons, PWA icons, cached Android assets, and base-runtime.apk.
 """
 
 import struct
 import zlib
 import os
+import zipfile
 
 # Exact SVG definition matching the user's logo image
 SVG_CONTENT = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
@@ -92,7 +94,7 @@ def create_png_bytes(width, height):
             r, g, b, a = render_pixel(x, y, width, height)
             raw_data.extend([r, g, b, a])
             
-    png = b'\\x89PNG\\r\\n\\x1a\\n'
+    png = b'\x89PNG\r\n\x1a\n'
     ihdr_data = struct.pack('>IIBBBBB', width, height, 8, 6, 0, 0, 0)
     ihdr_crc = zlib.crc32(b'IHDR' + ihdr_data)
     png += struct.pack('>I', 13) + b'IHDR' + ihdr_data + struct.pack('>I', ihdr_crc)
@@ -128,16 +130,45 @@ def main():
         (".cached_res/mipmap-mdpi-v4/ic_launcher.png", 48),
         (".cached_res/mipmap-hdpi-v4/ic_launcher.png", 72),
         (".cached_res/mipmap-xhdpi-v4/ic_launcher.png", 96),
+        (".cached_res/mipmap-xxhdpi-v4/ic_launcher.png", 144),
         (".cached_res/mipmap-xxxhdpi-v4/ic_launcher.png", 192),
         (".cached_res/drawable/ic_launcher.png", 192),
     ]
     
+    generated_pngs = {}
     for path, size in targets:
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        data = create_png_bytes(size, size)
+        if size not in generated_pngs:
+            generated_pngs[size] = create_png_bytes(size, size)
+        data = generated_pngs[size]
         with open(path, "wb") as f:
             f.write(data)
         print(f"✓ Generated {path} ({size}x{size})")
+        
+    # Directly update base-runtime.apk if present
+    base_apk = ".cached_res/base-runtime.apk"
+    if os.path.exists(base_apk):
+        print(f"Updating all icon entries inside {base_apk}...")
+        tmp_apk = ".cached_res/base-runtime-updated.apk"
+        density_sizes = {
+            "res/mipmap-mdpi-v4/ic_launcher.png": 48,
+            "res/mipmap-hdpi-v4/ic_launcher.png": 72,
+            "res/mipmap-xhdpi-v4/ic_launcher.png": 96,
+            "res/mipmap-xxhdpi-v4/ic_launcher.png": 144,
+            "res/mipmap-xxxhdpi-v4/ic_launcher.png": 192,
+            "res/drawable/ic_launcher.png": 192,
+        }
+        with zipfile.ZipFile(base_apk, 'r') as z_in, zipfile.ZipFile(tmp_apk, 'w') as z_out:
+            for item in z_in.infolist():
+                if item.filename in density_sizes:
+                    sz = density_sizes[item.filename]
+                    z_out.writestr(item.filename, generated_pngs[sz], compress_type=zipfile.ZIP_DEFLATED)
+                else:
+                    data = z_in.read(item.filename)
+                    compress_type = zipfile.ZIP_STORED if item.filename == "resources.arsc" else item.compress_type
+                    z_out.writestr(item, data)
+        os.replace(tmp_apk, base_apk)
+        print("✓ Updated base-runtime.apk with exact logo icons")
         
     print("All logo and icon assets updated successfully!")
 
