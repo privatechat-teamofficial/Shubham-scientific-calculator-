@@ -1,7 +1,9 @@
 /**
  * Safe Contact Developer email handler for Android WebView, PWA, and desktop browsers.
- * Seamlessly launches native email clients via standard mailto URI,
- * provides Gmail web fallback, and copies email to clipboard.
+ * - Attempts to redirect to the native Gmail/mail app if available.
+ * - Falls back to Gmail Web if the app is not available.
+ * - Prevents net::ERR_UNKNOWN_URL_SCHEME errors in Android WebView.
+ * - Keeps email address private from display UI.
  */
 
 export const DEVELOPER_EMAIL = 'imshubhamk9@gmail.com';
@@ -16,46 +18,73 @@ export function getGmailWebUri(): string {
   return `https://mail.google.com/mail/?view=cm&fs=1&to=${DEVELOPER_EMAIL}&su=${encodeURIComponent(EMAIL_SUBJECT)}&body=${encodeURIComponent(EMAIL_BODY)}`;
 }
 
-export function handleContactDeveloper(
-  onSuccess?: () => void,
-  onError?: (msg: string) => void
-) {
-  const mailtoUri = getMailtoUri();
+/**
+ * Attempts to open Gmail app first; falls back to Gmail Web if not available.
+ */
+export function openDeveloperEmail(
+  onStatusChange?: (status: 'idle' | 'opening' | 'opened') => void
+): void {
+  const subject = encodeURIComponent(EMAIL_SUBJECT);
+  const body = encodeURIComponent(EMAIL_BODY);
 
-  // 1. Copy email address to clipboard as a reliable backup
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(DEVELOPER_EMAIL).catch(() => {});
-  }
+  const gmailAppScheme = `googlegmail:///co?to=${DEVELOPER_EMAIL}&subject=${subject}&body=${body}`;
+  const mailtoScheme = `mailto:${DEVELOPER_EMAIL}?subject=${subject}&body=${body}`;
+  const gmailWebUrl = getGmailWebUri();
 
-  // 2. Direct window.location navigation triggers Android WebView's shouldOverrideUrlLoading
-  // and native browser email client invocation without popup-blocker issues
-  try {
-    // Standard direct navigation for mailto
-    window.location.href = mailtoUri;
+  if (onStatusChange) onStatusChange('opening');
 
-    if (onSuccess) {
-      onSuccess();
+  let appLaunched = false;
+
+  const handleVisibilityChange = () => {
+    if (document.hidden || document.visibilityState === 'hidden') {
+      appLaunched = true;
     }
-  } catch (e) {
-    console.error('Email launch error:', e);
-    // Fallback using DOM anchor click
+  };
+
+  const handleBlur = () => {
+    appLaunched = true;
+  };
+
+  window.addEventListener('visibilitychange', handleVisibilityChange, { once: true });
+  window.addEventListener('blur', handleBlur, { once: true });
+
+  // Use invisible iframes so the WebView will not navigate away or show net::ERR_UNKNOWN_URL_SCHEME
+  const iframeApp = document.createElement('iframe');
+  iframeApp.style.display = 'none';
+  iframeApp.style.width = '0px';
+  iframeApp.style.height = '0px';
+  iframeApp.src = gmailAppScheme;
+  document.body.appendChild(iframeApp);
+
+  const iframeMail = document.createElement('iframe');
+  iframeMail.style.display = 'none';
+  iframeMail.style.width = '0px';
+  iframeMail.style.height = '0px';
+  iframeMail.src = mailtoScheme;
+  document.body.appendChild(iframeMail);
+
+  // If the native app hasn't taken over within 1000ms, open Gmail Web
+  setTimeout(() => {
     try {
-      const a = document.createElement('a');
-      a.href = mailtoUri;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        try {
-          document.body.removeChild(a);
-        } catch {}
-      }, 500);
-      if (onSuccess) onSuccess();
-    } catch (err) {
-      if (onError) {
-        onError('Please email imshubhamk9@gmail.com');
+      if (iframeApp.parentNode) iframeApp.parentNode.removeChild(iframeApp);
+      if (iframeMail.parentNode) iframeMail.parentNode.removeChild(iframeMail);
+    } catch {}
+
+    window.removeEventListener('visibilitychange', handleVisibilityChange);
+    window.removeEventListener('blur', handleBlur);
+
+    if (!appLaunched && !document.hidden && document.visibilityState === 'visible') {
+      // Try opening Gmail Web in a new window/tab
+      const newWin = window.open(gmailWebUrl, '_blank', 'noopener,noreferrer');
+      // If popup was blocked or inside restricted WebView, navigate safely using HTTPS URL
+      if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
+        window.location.assign(gmailWebUrl);
       }
     }
-  }
-}
 
+    if (onStatusChange) {
+      onStatusChange('opened');
+      setTimeout(() => onStatusChange('idle'), 2000);
+    }
+  }, 1000);
+}

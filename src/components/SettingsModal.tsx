@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Sliders, Volume2, Type, Mail, Check } from 'lucide-react';
 import { AngleUnit, FractionFormat, NumberFormat } from '../types';
-import { handleContactDeveloper, DEVELOPER_EMAIL } from '../lib/contactHelper';
+import { openDeveloperEmail } from '../lib/contactHelper';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -32,7 +32,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   audioFeedback,
   onSetAudioFeedback,
 }) => {
-  const [feedbackSent, setFeedbackSent] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'opening' | 'opened'>('idle');
+
   if (!isOpen) return null;
 
   return (
@@ -60,7 +61,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 active:scale-95 transition-colors"
+            className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 active:scale-95 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -83,7 +84,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <button
                   key={u}
                   onClick={() => onSetAngleUnit(u)}
-                  className={`py-2 rounded-xl font-bold border transition-all active:scale-95 ${
+                  className={`py-2 rounded-xl font-bold border transition-all active:scale-95 cursor-pointer ${
                     angleUnit === u
                       ? 'bg-amber-500 text-black border-amber-400 shadow-sm shadow-amber-500/30'
                       : 'bg-[#18181b] text-neutral-300 border-neutral-800 hover:bg-[#27272a]'
@@ -103,7 +104,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => onSetFractionFormat('EXACT')}
-                className={`py-2 rounded-xl font-bold border transition-all active:scale-95 ${
+                className={`py-2 rounded-xl font-bold border transition-all active:scale-95 cursor-pointer ${
                   fractionFormat === 'EXACT'
                     ? 'bg-amber-500 text-black border-amber-400 shadow-sm shadow-amber-500/30'
                     : 'bg-[#18181b] text-neutral-300 border-neutral-800 hover:bg-[#27272a]'
@@ -113,7 +114,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </button>
               <button
                 onClick={() => onSetFractionFormat('MIXED')}
-                className={`py-2 rounded-xl font-bold border transition-all active:scale-95 ${
+                className={`py-2 rounded-xl font-bold border transition-all active:scale-95 cursor-pointer ${
                   fractionFormat === 'MIXED'
                     ? 'bg-amber-500 text-black border-amber-400 shadow-sm shadow-amber-500/30'
                     : 'bg-[#18181b] text-neutral-300 border-neutral-800 hover:bg-[#27272a]'
@@ -123,7 +124,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </button>
               <button
                 onClick={() => onSetFractionFormat('DECIMAL')}
-                className={`py-2 rounded-xl font-bold border transition-all active:scale-95 ${
+                className={`py-2 rounded-xl font-bold border transition-all active:scale-95 cursor-pointer ${
                   fractionFormat === 'DECIMAL'
                     ? 'bg-amber-500 text-black border-amber-400 shadow-sm shadow-amber-500/30'
                     : 'bg-[#18181b] text-neutral-300 border-neutral-800 hover:bg-[#27272a]'
@@ -144,7 +145,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <button
                   key={fmt}
                   onClick={() => onSetNumberFormat(fmt)}
-                  className={`py-2 rounded-xl font-bold border transition-all active:scale-95 ${
+                  className={`py-2 rounded-xl font-bold border transition-all active:scale-95 cursor-pointer ${
                     numberFormat === fmt
                       ? 'bg-amber-500 text-black border-amber-400 shadow-sm shadow-amber-500/30'
                       : 'bg-[#18181b] text-neutral-300 border-neutral-800 hover:bg-[#27272a]'
@@ -200,33 +201,40 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <Mail className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="text-white font-bold text-xs flex items-center gap-1.5">
+                  <div className="text-white font-bold text-xs">
                     Contact Developer
                   </div>
-                  <div className="text-neutral-400 text-[11px] mt-0.5">
-                    {DEVELOPER_EMAIL}
+                  <div className="text-neutral-400 text-[11px]">
+                    Feedback, bug reports & suggestions
                   </div>
                 </div>
               </div>
+
+              {/* Single Email Action Button */}
               <button
                 type="button"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  handleContactDeveloper(() => {
-                    setFeedbackSent(true);
-                    setTimeout(() => setFeedbackSent(false), 3000);
-                  });
+                  openDeveloperEmail(setEmailStatus);
                 }}
-                className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs transition-all active:scale-95 shadow-xs cursor-pointer flex items-center gap-1.5"
+                className="py-2 px-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-amber-500/20 shrink-0"
               >
-                {feedbackSent ? (
+                {emailStatus === 'opening' ? (
                   <>
-                    <Check className="w-3.5 h-3.5" />
+                    <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    Opening...
+                  </>
+                ) : emailStatus === 'opened' ? (
+                  <>
+                    <Check className="w-3.5 h-3.5" strokeWidth={3} />
                     Opening...
                   </>
                 ) : (
-                  'Email'
+                  <>
+                    <Mail className="w-3.5 h-3.5" />
+                    Email
+                  </>
                 )}
               </button>
             </div>
