@@ -61,12 +61,6 @@ export const ResultView: React.FC<ResultViewProps> = ({
     }
   }
 
-  // Format output text cleanly without 3-digit grouping
-  const formatOutput = (numStr: string) => {
-    if (!numStr) return '';
-    return cleanLatexToUnicode(numStr);
-  };
-
   const displayText = displayMode === 'DECIMAL' 
     ? (result.decimal || cleanLatexToUnicode(result.exact)) 
     : cleanLatexToUnicode(result.exact);
@@ -83,7 +77,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
             className="leading-none px-0.5 font-oryno-bold"
             style={{ fontSize: `${fontSize}px`, paddingBottom: '2px' }}
           >
-            {formatOutput(fractionParts.n)}
+            {cleanLatexToUnicode(fractionParts.n)}
           </span>
           {/* Fraction Bar */}
           <div className="w-full h-[1.75px] bg-[#0f172a] my-0 min-w-[16px] rounded-full" />
@@ -92,7 +86,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
             className="leading-none px-0.5 font-oryno-bold"
             style={{ fontSize: `${fontSize}px`, paddingTop: '2px' }}
           >
-            {formatOutput(fractionParts.d)}
+            {cleanLatexToUnicode(fractionParts.d)}
           </span>
         </div>
       ) : (
@@ -101,7 +95,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
           className="font-bold leading-none select-text"
           style={{ fontSize: `${fontSize}px` }}
         >
-          {formatOutput(displayText)}
+          {cleanLatexToUnicode(displayText)}
         </span>
       )}
 
@@ -112,7 +106,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
           style={{ fontSize: `${Math.max(fontSize * 0.72, 13)}px` }}
         >
           <span className="text-slate-500 font-normal">=</span>
-          <span>{formatOutput(result.decimal)}</span>
+          <span>{cleanLatexToUnicode(result.decimal)}</span>
         </div>
       )}
     </div>

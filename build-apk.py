@@ -226,8 +226,11 @@ def main():
     # 2. Base APK with Android runtime binaries
     candidates = [
         os.path.join(APPLET_DIR, ".cached_res", "base-runtime.apk"),
+        os.path.join(APPLET_DIR, "APK_DOWNLOAD", "SHUBHAM-Scientific-Calculator.apk"),
         os.path.join(APPLET_DIR, "APK_DOWNLOAD", "app-debug.apk"),
+        os.path.join(APPLET_DIR, ".build-outputs", "SHUBHAM-Scientific-Calculator.apk"),
         os.path.join(APPLET_DIR, ".build-outputs", "app-debug.apk"),
+        os.path.join(APPLET_DIR, "public", "SHUBHAM-Scientific-Calculator.apk"),
         os.path.join(APPLET_DIR, "public", "app-debug.apk"),
     ]
     
@@ -382,14 +385,18 @@ def main():
         raise RuntimeError(f"APK size {apk_size} bytes is smaller than 1MB!")
         
     # Clean up old duplicate APK files
+    app_apk_name = "SHUBHAM-Scientific-Calculator.apk"
     for folder in [os.path.join(APPLET_DIR, "APK_DOWNLOAD"), os.path.join(APPLET_DIR, ".build-outputs"), os.path.join(APPLET_DIR, "public")]:
         if os.path.exists(folder):
             for f in os.listdir(folder):
-                if f.endswith(".apk") and f != "app-debug.apk":
+                if f.endswith(".apk") and f not in [app_apk_name, "app-debug.apk"]:
                     os.remove(os.path.join(folder, f))
                     
     # 7. Distribute single real APK
     destinations = [
+        os.path.join(APPLET_DIR, ".build-outputs", app_apk_name),
+        os.path.join(APPLET_DIR, "APK_DOWNLOAD", app_apk_name),
+        os.path.join(APPLET_DIR, "public", app_apk_name),
         os.path.join(APPLET_DIR, ".build-outputs", "app-debug.apk"),
         os.path.join(APPLET_DIR, "APK_DOWNLOAD", "app-debug.apk"),
         os.path.join(APPLET_DIR, "public", "app-debug.apk"),

@@ -6,8 +6,13 @@ on:
       - main
   workflow_dispatch:
 
+concurrency:
+  group: release-apk-build
+  cancel-in-progress: true
+
 permissions:
   contents: write
+  actions: write
 
 jobs:
   build-and-release:
@@ -16,6 +21,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Delete previous workflow runs except latest
+        uses: Mattraks/delete-workflow-runs@v2
+        continue-on-error: true
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          retain_days: 0
+          keep_minimum_runs: 1
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -40,26 +54,41 @@ jobs:
           echo "Verifying generated build artifacts..."
           ls -la APK_DOWNLOAD/
           ls -la .build-outputs/
-          if [ ! -f APK_DOWNLOAD/app-debug.apk ]; then
-            echo "ERROR: APK_DOWNLOAD/app-debug.apk does not exist!"
+          if [ ! -f APK_DOWNLOAD/SHUBHAM-Scientific-Calculator.apk ]; then
+            echo "ERROR: APK_DOWNLOAD/SHUBHAM-Scientific-Calculator.apk does not exist!"
             exit 1
           fi
-          if [ ! -s APK_DOWNLOAD/app-debug.apk ]; then
-            echo "ERROR: APK_DOWNLOAD/app-debug.apk is empty (0B)!"
+          if [ ! -s APK_DOWNLOAD/SHUBHAM-Scientific-Calculator.apk ]; then
+            echo "ERROR: APK_DOWNLOAD/SHUBHAM-Scientific-Calculator.apk is empty (0B)!"
             exit 1
           fi
-          echo "SUCCESS: APK_DOWNLOAD/app-debug.apk verified successfully ($(stat -c%s APK_DOWNLOAD/app-debug.apk) bytes)."
+          echo "SUCCESS: APK_DOWNLOAD/SHUBHAM-Scientific-Calculator.apk verified successfully ($(stat -c%s APK_DOWNLOAD/SHUBHAM-Scientific-Calculator.apk) bytes)."
 
-      - name: Publish GitHub Release
+      - name: Publish GitHub Release v1.0.0
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: build-${{ github.run_number }}
-          name: SHUBHAM Scientific Calculator - Build ${{ github.run_number }}
+          tag_name: v1.0.0
+          name: SHUBHAM Scientific Calculator v1.0.0
           draft: false
           prerelease: false
-          generate_release_notes: true
+          generate_release_notes: false
+          body: |
+            ### 📱 SHUBHAM Scientific Calculator v1.0.0
+
+            Official production release of **SHUBHAM Scientific Calculator**.
+
+            #### ✨ Key Features
+            - **Natural Textbook Display**: Multi-tier fraction rendering, superscripts, root exponents, and clean mathematical formatting.
+            - **Exact & Decimal Evaluation**: Live calculation, exact radical/fraction answers, and one-tap S⇔D toggling.
+            - **Ergonomic Keypad & Ans Functionality**: Dedicated Ans key that erases previous expressions to start fresh with your latest calculated output.
+            - **Calculus & Linear Algebra**: Numerical integration, differentiation, equation solvers, and comprehensive constant/unit conversions.
+            - **Offline-Ready Android APK**: Standalone signed APK for instant installation on any Android device.
+
+            #### 📦 Release Assets
+            - 🚀 **`SHUBHAM-Scientific-Calculator.apk`**: Direct Android APK installable application.
+            - 📦 **`SHUBHAM-Calculator-App.zip`**: Complete offline source code and assets archive.
           files: |
-            APK_DOWNLOAD/app-debug.apk
+            APK_DOWNLOAD/SHUBHAM-Scientific-Calculator.apk
             SHUBHAM-Calculator-App.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

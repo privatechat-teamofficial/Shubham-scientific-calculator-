@@ -605,7 +605,8 @@ export default function App() {
         case 'Ans': {
           pushUndo(ast, cursor);
           if (result && typeof result.rawNumeric === 'number' && !Number.isNaN(result.rawNumeric)) {
-            setVariables((prev) => ({ ...prev, Ans: result.rawNumeric }));
+            const numericAns: number = result.rawNumeric;
+            setVariables((prev) => ({ ...prev, Ans: numericAns }));
           }
           const emptySeq: MathSequence = [];
           const emptyCursor: CursorPath = { steps: [], index: 0 };
@@ -864,7 +865,8 @@ export default function App() {
       case 'Ans': {
         pushUndo(ast, cursor);
         if (result && typeof result.rawNumeric === 'number' && !Number.isNaN(result.rawNumeric)) {
-          setVariables((prev) => ({ ...prev, Ans: result.rawNumeric }));
+          const numericAns: number = result.rawNumeric;
+          setVariables((prev) => ({ ...prev, Ans: numericAns }));
         }
         const emptySeq: MathSequence = [];
         const emptyCursor: CursorPath = { steps: [], index: 0 };
