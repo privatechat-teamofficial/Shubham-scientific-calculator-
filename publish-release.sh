@@ -2,12 +2,12 @@
 set -e
 
 # ==============================================================================
-# Script to build and upload the latest APK to GitHub Releases
+# Script to delete previous releases and publish v1.0.0 as the single release
 # ==============================================================================
 
 TAG=${1:-"v1.0.0"}
 TITLE="SHUBHAM Scientific Calculator $TAG"
-NOTES="### 📱 SHUBHAM Scientific Calculator - Official Release ($TAG)
+NOTES="### 📱 SHUBHAM Scientific Calculator - Official First Release ($TAG)
 
 - ✨ High-precision natural textbook display
 - 📐 2D Graphing, Function Solver, & Constant/Unit Conversions
@@ -28,17 +28,22 @@ python3 build-apk.py
 
 # 2. Check if gh is installed
 if command -v gh &> /dev/null; then
-    echo "2. GitHub CLI (gh) detected. Publishing release..."
+    echo "2. Deleting any previous releases..."
+    for OLD_TAG in $(gh release list --limit 100 --json tagName -q '.[].tagName' 2>/dev/null || true); do
+        if [ "$OLD_TAG" != "$TAG" ]; then
+            echo "Deleting old release: $OLD_TAG"
+            gh release delete "$OLD_TAG" --yes --cleanup-tag 2>/dev/null || true
+        fi
+    done
+
+    echo "3. Publishing single release: $TAG..."
     gh release create "$TAG" \
         APK_DOWNLOAD/SHUBHAM-Scientific-Calculator.apk \
         SHUBHAM-Calculator-App.zip \
         --title "$TITLE" \
         --notes "$NOTES"
-    echo "✓ GitHub Release $TAG successfully created with APK attached!"
+    echo "✓ GitHub Release $TAG successfully created as the single official release!"
 else
     echo "Notice: GitHub CLI ('gh') is not installed locally."
-    echo "To publish automatically via GitHub Actions, push to main or push tag $TAG:"
-    echo "  git tag $TAG"
-    echo "  git push origin $TAG"
-    echo "GitHub Actions will automatically build and attach SHUBHAM-Scientific-Calculator.apk to the Release."
+    echo "When pushing to GitHub (or on GitHub Actions), previous releases will be cleaned up automatically and $TAG published."
 fi
