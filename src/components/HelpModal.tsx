@@ -1,5 +1,6 @@
-import React from 'react';
-import { X, HelpCircle, Keyboard } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, HelpCircle, Keyboard, Check } from 'lucide-react';
+import { handleContactDeveloper } from '../lib/contactHelper';
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -7,6 +8,7 @@ interface HelpModalProps {
 }
 
 export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
+  const [feedbackSent, setFeedbackSent] = useState(false);
   if (!isOpen) return null;
 
   return (
@@ -96,23 +98,22 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               type="button"
               onClick={(e) => {
                 e.preventDefault();
-                const mailtoUrl = 'mailto:imshubhamk9@gmail.com?subject=SHUBHAM%20Calculator%20Feedback';
-                try {
-                  const ifr = document.createElement('iframe');
-                  ifr.style.display = 'none';
-                  ifr.src = mailtoUrl;
-                  document.body.appendChild(ifr);
-                  setTimeout(() => {
-                    try { document.body.removeChild(ifr); } catch {}
-                  }, 1500);
-                } catch {}
-                try {
-                  window.open(mailtoUrl, '_system');
-                } catch {}
+                e.stopPropagation();
+                handleContactDeveloper(() => {
+                  setFeedbackSent(true);
+                  setTimeout(() => setFeedbackSent(false), 3000);
+                });
               }}
-              className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs transition-all active:scale-95 cursor-pointer"
+              className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
             >
-              Email
+              {feedbackSent ? (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  Opening...
+                </>
+              ) : (
+                'Email'
+              )}
             </button>
           </div>
         </div>

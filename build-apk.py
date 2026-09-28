@@ -302,13 +302,27 @@ def main():
                     files_map["assets/www/fonts/" + f] = f_obj.read()
                     
     # Inject modern high-resolution scientific calculator icon into Android launcher drawables
-    icon_path = os.path.join(APPLET_DIR, "public", "pwa-512x512.png")
-    if os.path.exists(icon_path):
-        with open(icon_path, "rb") as f_icon:
-            icon_data = f_icon.read()
-            for k in list(files_map.keys()):
-                if "ic_launcher" in k and k.endswith(".png"):
-                    files_map[k] = icon_data
+    icon_mappings = {
+        "mdpi": os.path.join(APPLET_DIR, "public", "icons", "icon-48.png"),
+        "hdpi": os.path.join(APPLET_DIR, "public", "icons", "icon-72.png"),
+        "xhdpi": os.path.join(APPLET_DIR, "public", "icons", "icon-96.png"),
+        "xxhdpi": os.path.join(APPLET_DIR, "public", "icons", "icon-144.png"),
+        "xxxhdpi": os.path.join(APPLET_DIR, "public", "icons", "icon-192.png"),
+    }
+    fallback_icon = os.path.join(APPLET_DIR, "public", "pwa-512x512.png")
+    
+    for k in list(files_map.keys()):
+        if "ic_launcher" in k and k.endswith(".png"):
+            matched = False
+            for density, path in icon_mappings.items():
+                if density in k and os.path.exists(path):
+                    with open(path, "rb") as f_i:
+                        files_map[k] = f_i.read()
+                    matched = True
+                    break
+            if not matched and os.path.exists(fallback_icon):
+                with open(fallback_icon, "rb") as f_i:
+                    files_map[k] = f_i.read()
                     
     # 4. Assemble final unsigned APK (resources.arsc must be stored uncompressed ZIP_STORED)
     print("4. Assembling unsigned APK with uncompressed resources.arsc (ZIP_STORED)...")

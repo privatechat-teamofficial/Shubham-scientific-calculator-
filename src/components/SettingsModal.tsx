@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Sliders, Volume2, Type, Mail, Check, Copy } from 'lucide-react';
+import { X, Sliders, Volume2, Type, Mail, Check } from 'lucide-react';
 import { AngleUnit, FractionFormat, NumberFormat } from '../types';
+import { handleContactDeveloper } from '../lib/contactHelper';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -31,7 +32,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   audioFeedback,
   onSetAudioFeedback,
 }) => {
-  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [feedbackSent, setFeedbackSent] = useState(false);
   if (!isOpen) return null;
 
   return (
@@ -211,24 +212,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 type="button"
                 onClick={(e) => {
                   e.preventDefault();
-                  const mailtoUrl = 'mailto:imshubhamk9@gmail.com?subject=SHUBHAM%20Calculator%20Feedback';
-                  try {
-                    // Safe intent trigger for Android WebView & iOS
-                    const ifr = document.createElement('iframe');
-                    ifr.style.display = 'none';
-                    ifr.src = mailtoUrl;
-                    document.body.appendChild(ifr);
-                    setTimeout(() => {
-                      try { document.body.removeChild(ifr); } catch {}
-                    }, 1500);
-                  } catch {}
-                  try {
-                    window.open(mailtoUrl, '_system');
-                  } catch {}
+                  e.stopPropagation();
+                  handleContactDeveloper(() => {
+                    setFeedbackSent(true);
+                    setTimeout(() => setFeedbackSent(false), 3000);
+                  });
                 }}
-                className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs transition-all active:scale-95 shadow-xs cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs transition-all active:scale-95 shadow-xs cursor-pointer flex items-center gap-1.5"
               >
-                Email
+                {feedbackSent ? (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    Opening...
+                  </>
+                ) : (
+                  'Email'
+                )}
               </button>
             </div>
           </div>
