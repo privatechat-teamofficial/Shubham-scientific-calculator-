@@ -1049,73 +1049,91 @@ export default function App() {
 
   return (
     <div 
-      className={`min-h-screen w-full bg-[#000000] text-slate-100 flex flex-col items-center justify-start select-none shadow-2xl relative overflow-x-hidden font-oryno-bold transition-opacity duration-300 ease-out ${isReady ? 'opacity-100' : 'opacity-0'}`}
+      className={`min-h-screen w-full bg-[#000000] text-slate-100 flex flex-col items-center justify-center select-none shadow-2xl relative overflow-hidden font-oryno-bold transition-opacity duration-300 ease-out ${isReady ? 'opacity-100' : 'opacity-0'}`}
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
-      {/* Unified Mobile & Tablet Calculator Shell: exact same layout, size, and proportions with zero gaps */}
+      {/* Responsive Scaling Wrapper: width and height calculated together with uniform scale */}
       <div 
-        ref={shellRef}
-        className="w-full max-w-[430px] min-h-screen flex flex-col bg-[#000000] pb-2"
+        className="relative flex items-center justify-center overflow-hidden shrink-0 select-none"
+        style={{
+          width: `${calcDimensions.width * calcScale}px`,
+          height: `${calcDimensions.height * calcScale}px`,
+        }}
       >
-        {/* Header with App Branding and Utility Modals */}
-        <Header
-          onOpenHistory={() => setIsHistoryOpen(true)}
-          onOpenVariables={() => setIsVariablesOpen(true)}
-          onOpenCamera={() => setIsCameraOpen(true)}
-          onOpenGraph={() => setIsGraphOpen(true)}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-          onOpenSolver={() => setIsStepSolverOpen(true)}
-          onOpenHelp={() => setIsHelpOpen(true)}
-          historyCount={history.length}
-        />
+        {/* Unified Mobile Calculator Shell: scaled uniformly as a single object */}
+        <div 
+          ref={shellRef}
+          className="flex flex-col bg-[#000000] pb-2"
+          style={{
+            width: `${calcDimensions.width}px`,
+            height: `${calcDimensions.height}px`,
+            transform: `scale(${calcScale})`,
+            transformOrigin: 'top left',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+          }}
+        >
+          {/* Header with App Branding and Utility Modals */}
+          <Header
+            onOpenHistory={() => setIsHistoryOpen(true)}
+            onOpenVariables={() => setIsVariablesOpen(true)}
+            onOpenCamera={() => setIsCameraOpen(true)}
+            onOpenGraph={() => setIsGraphOpen(true)}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenSolver={() => setIsStepSolverOpen(true)}
+            onOpenHelp={() => setIsHelpOpen(true)}
+            historyCount={history.length}
+          />
 
-        {/* Compact Mathematical Expression Editor Display Screen */}
-        <NaturalDisplay
-          ast={ast}
-          cursor={cursor}
-          onSetCursor={setCursor}
-          result={result}
-          displayMode={displayMode}
-          onToggleDisplayMode={() => setDisplayMode((m) => (m === 'EXACT' ? 'DECIMAL' : 'EXACT'))}
-          onOpenStepSolver={() => setIsStepSolverOpen(true)}
-          fontSize={fontSize}
-          onKeyDown={handleKeyDown}
-        />
+          {/* Compact Mathematical Expression Editor Display Screen */}
+          <NaturalDisplay
+            ast={ast}
+            cursor={cursor}
+            onSetCursor={setCursor}
+            result={result}
+            displayMode={displayMode}
+            onToggleDisplayMode={() => setDisplayMode((m) => (m === 'EXACT' ? 'DECIMAL' : 'EXACT'))}
+            onOpenStepSolver={() => setIsStepSolverOpen(true)}
+            fontSize={fontSize}
+            onKeyDown={handleKeyDown}
+          />
 
-        {/* Status Bar */}
-        <StatusBar
-          angleUnit={angleUnit}
-          onCycleAngleUnit={handleCycleAngleUnit}
-          fractionFormat={fractionFormat}
-          onToggleFractionFormat={() => setFractionFormat((f) => (f === 'EXACT' ? 'DECIMAL' : f === 'DECIMAL' ? 'MIXED' : 'EXACT'))}
-          numberFormat={numberFormat}
-          onCycleNumberFormat={() => setNumberFormat((n) => (n === 'NORM' ? 'SCI' : n === 'SCI' ? 'ENG' : 'NORM'))}
-          isShift={isShift}
-          isAlpha={isAlpha}
-          hasMemory={variables.M !== 0}
-          onZoomIn={() => setFontSize((s) => Math.min(s + 2, 28))}
-          onZoomOut={() => setFontSize((s) => Math.max(s - 2, 16))}
-          onUndo={handleUndo}
-          onRedo={handleRedo}
-          canUndo={undoStack.length > 0}
-          canRedo={redoStack.length > 0}
-        />
-
-        {/* ClassWiz Keypad directly below Status Bar */}
-        <div className="w-full bg-[#000000] pt-0.5">
-          <Keypad
+          {/* Status Bar */}
+          <StatusBar
+            angleUnit={angleUnit}
+            onCycleAngleUnit={handleCycleAngleUnit}
+            fractionFormat={fractionFormat}
+            onToggleFractionFormat={() => setFractionFormat((f) => (f === 'EXACT' ? 'DECIMAL' : f === 'DECIMAL' ? 'MIXED' : 'EXACT'))}
+            numberFormat={numberFormat}
+            onCycleNumberFormat={() => setNumberFormat((n) => (n === 'NORM' ? 'SCI' : n === 'SCI' ? 'ENG' : 'NORM'))}
             isShift={isShift}
             isAlpha={isAlpha}
-            onToggleShift={() => setIsShift((s) => !s)}
-            onToggleAlpha={() => setIsAlpha((a) => !a)}
-            onKeyPress={handleKeyPress}
-            onCursorMove={handleCursorMove}
-            onOpenMenu={() => setIsHelpOpen(true)}
-            onOpenSettings={() => setIsSettingsOpen(true)}
-            onOpenOption={() => setIsVariablesOpen(true)}
-            onTurnOn={() => setShowStartup(true)}
+            hasMemory={variables.M !== 0}
+            onZoomIn={() => setFontSize((s) => Math.min(s + 2, 28))}
+            onZoomOut={() => setFontSize((s) => Math.max(s - 2, 16))}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            canUndo={undoStack.length > 0}
+            canRedo={redoStack.length > 0}
           />
+
+          {/* ClassWiz Keypad directly below Status Bar */}
+          <div className="w-full bg-[#000000] pt-0.5">
+            <Keypad
+              isShift={isShift}
+              isAlpha={isAlpha}
+              onToggleShift={() => setIsShift((s) => !s)}
+              onToggleAlpha={() => setIsAlpha((a) => !a)}
+              onKeyPress={handleKeyPress}
+              onCursorMove={handleCursorMove}
+              onOpenMenu={() => setIsHelpOpen(true)}
+              onOpenSettings={() => setIsSettingsOpen(true)}
+              onOpenOption={() => setIsVariablesOpen(true)}
+              onTurnOn={() => setShowStartup(true)}
+            />
+          </div>
         </div>
       </div>
 
