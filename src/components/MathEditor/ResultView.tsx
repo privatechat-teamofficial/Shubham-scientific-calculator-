@@ -61,14 +61,10 @@ export const ResultView: React.FC<ResultViewProps> = ({
     }
   }
 
-  // Format large numbers with thin spaces
-  const formatNumberWithSpaces = (numStr: string) => {
+  // Format output text cleanly without 3-digit grouping
+  const formatOutput = (numStr: string) => {
     if (!numStr) return '';
-    const cleaned = cleanLatexToUnicode(numStr);
-    if (isNaN(Number(cleaned.replace(/\s/g, '')))) return cleaned;
-    const parts = cleaned.split('.');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-    return parts.join('.');
+    return cleanLatexToUnicode(numStr);
   };
 
   const displayText = displayMode === 'DECIMAL' 
@@ -87,7 +83,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
             className="leading-none px-0.5 font-oryno-bold"
             style={{ fontSize: `${fontSize}px`, paddingBottom: '2px' }}
           >
-            {formatNumberWithSpaces(fractionParts.n)}
+            {formatOutput(fractionParts.n)}
           </span>
           {/* Fraction Bar */}
           <div className="w-full h-[1.75px] bg-[#0f172a] my-0 min-w-[16px] rounded-full" />
@@ -96,7 +92,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
             className="leading-none px-0.5 font-oryno-bold"
             style={{ fontSize: `${fontSize}px`, paddingTop: '2px' }}
           >
-            {formatNumberWithSpaces(fractionParts.d)}
+            {formatOutput(fractionParts.d)}
           </span>
         </div>
       ) : (
@@ -105,7 +101,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
           className="font-bold leading-none select-text"
           style={{ fontSize: `${fontSize}px` }}
         >
-          {formatNumberWithSpaces(displayText)}
+          {formatOutput(displayText)}
         </span>
       )}
 
@@ -116,7 +112,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
           style={{ fontSize: `${Math.max(fontSize * 0.72, 13)}px` }}
         >
           <span className="text-slate-500 font-normal">=</span>
-          <span>{formatNumberWithSpaces(result.decimal)}</span>
+          <span>{formatOutput(result.decimal)}</span>
         </div>
       )}
     </div>

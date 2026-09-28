@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Sliders, Volume2, Type, Mail, Check } from 'lucide-react';
 import { AngleUnit, FractionFormat, NumberFormat } from '../types';
-import { handleContactDeveloper } from '../lib/contactHelper';
+import { handleContactDeveloper, DEVELOPER_EMAIL } from '../lib/contactHelper';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -204,7 +204,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     Contact Developer
                   </div>
                   <div className="text-neutral-400 text-[11px] mt-0.5">
-                    Direct feedback & technical support
+                    {DEVELOPER_EMAIL}
                   </div>
                 </div>
               </div>

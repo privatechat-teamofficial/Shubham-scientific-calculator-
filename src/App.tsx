@@ -604,8 +604,15 @@ export default function App() {
         }
         case 'Ans': {
           pushUndo(ast, cursor);
-          const { root, cursor: c } = insertVariable(ast, cursor, 'Ans');
-          setAst(root); setCursor(c);
+          if (result && typeof result.rawNumeric === 'number' && !Number.isNaN(result.rawNumeric)) {
+            setVariables((prev) => ({ ...prev, Ans: result.rawNumeric }));
+          }
+          const emptySeq: MathSequence = [];
+          const emptyCursor: CursorPath = { steps: [], index: 0 };
+          const { root, cursor: c } = insertVariable(emptySeq, emptyCursor, 'Ans');
+          setAst(root);
+          setCursor(c);
+          setResult(null);
           return;
         }
         case 'CALC': {
@@ -856,8 +863,15 @@ export default function App() {
 
       case 'Ans': {
         pushUndo(ast, cursor);
-        const { root, cursor: c } = insertVariable(ast, cursor, 'Ans');
-        setAst(root); setCursor(c);
+        if (result && typeof result.rawNumeric === 'number' && !Number.isNaN(result.rawNumeric)) {
+          setVariables((prev) => ({ ...prev, Ans: result.rawNumeric }));
+        }
+        const emptySeq: MathSequence = [];
+        const emptyCursor: CursorPath = { steps: [], index: 0 };
+        const { root, cursor: c } = insertVariable(emptySeq, emptyCursor, 'Ans');
+        setAst(root);
+        setCursor(c);
+        setResult(null);
         break;
       }
 

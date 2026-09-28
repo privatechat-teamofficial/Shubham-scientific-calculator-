@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
-import { X, HelpCircle, Keyboard, Check } from 'lucide-react';
-import { handleContactDeveloper } from '../lib/contactHelper';
+import React from 'react';
+import { X, HelpCircle, Keyboard } from 'lucide-react';
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -8,7 +7,6 @@ interface HelpModalProps {
 }
 
 export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
-  const [feedbackSent, setFeedbackSent] = useState(false);
   if (!isOpen) return null;
 
   return (
@@ -87,34 +85,6 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
               <div><kbd className="px-1.5 py-0.5 bg-[#000000] border border-neutral-700 rounded text-amber-300">/</kbd> : Fraction</div>
               <div><kbd className="px-1.5 py-0.5 bg-[#000000] border border-neutral-700 rounded text-amber-300">^</kbd> : Exponent / Power</div>
             </div>
-          </div>
-
-          <div className="p-3 rounded-xl bg-[#141416] border border-neutral-800 flex items-center justify-between">
-            <div>
-              <div className="font-bold text-white text-xs">Developer Contact</div>
-              <div className="text-neutral-400 text-[11px] mt-0.5">Direct feedback & technical support</div>
-            </div>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleContactDeveloper(() => {
-                  setFeedbackSent(true);
-                  setTimeout(() => setFeedbackSent(false), 3000);
-                });
-              }}
-              className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
-            >
-              {feedbackSent ? (
-                <>
-                  <Check className="w-3.5 h-3.5" />
-                  Opening...
-                </>
-              ) : (
-                'Email'
-              )}
-            </button>
           </div>
         </div>
       </div>
