@@ -7,7 +7,6 @@ import { HistoryDrawer } from './components/HistoryDrawer';
 import { VariablesModal } from './components/VariablesModal';
 import { ConstantsModal } from './components/ConstantsModal';
 import { ConversionModal } from './components/ConversionModal';
-import { GraphModal } from './components/GraphModal';
 import { CameraScannerModal } from './components/CameraScannerModal';
 import { StepSolverModal } from './components/StepSolverModal';
 import { SettingsModal } from './components/SettingsModal';
@@ -88,7 +87,6 @@ export default function App() {
   const [isVariablesOpen, setIsVariablesOpen] = useState(false);
   const [isConstantsOpen, setIsConstantsOpen] = useState(false);
   const [isConversionOpen, setIsConversionOpen] = useState(false);
-  const [isGraphOpen, setIsGraphOpen] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isStepSolverOpen, setIsStepSolverOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -1096,7 +1094,6 @@ export default function App() {
             onOpenHistory={() => setIsHistoryOpen(true)}
             onOpenVariables={() => setIsVariablesOpen(true)}
             onOpenCamera={() => setIsCameraOpen(true)}
-            onOpenGraph={() => setIsGraphOpen(true)}
             onOpenSettings={() => setIsSettingsOpen(true)}
             onOpenSolver={() => setIsStepSolverOpen(true)}
             onOpenHelp={() => setIsHelpOpen(true)}
@@ -1135,7 +1132,7 @@ export default function App() {
             canRedo={redoStack.length > 0}
           />
 
-          {/* ClassWiz Keypad directly below Status Bar */}
+          {/* SHUBHAM Keypad directly below Status Bar */}
           <div className="w-full bg-[#000000] pt-0.5">
             <Keypad
               isShift={isShift}
@@ -1205,12 +1202,6 @@ export default function App() {
           newAst.splice(cursor.index, 0, ...valAst);
           updateAst(newAst, { steps: cursor.steps, index: cursor.index + valAst.length });
         }}
-      />
-
-      <GraphModal
-        isOpen={isGraphOpen}
-        onClose={() => setIsGraphOpen(false)}
-        initialFunction={mathStringRepr.includes('x') ? mathStringRepr : 'x^2 - 3*x + 1'}
       />
 
       <CameraScannerModal

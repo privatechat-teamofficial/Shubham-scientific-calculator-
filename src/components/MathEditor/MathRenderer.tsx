@@ -15,6 +15,7 @@ interface MathRendererProps {
 
 const Cursor: React.FC = () => (
   <span 
+    data-math-cursor="true"
     className="inline-block w-0.5 bg-blue-600 animate-cursor-blink mx-[0.5px] select-none pointer-events-none rounded-[0.5px]" 
     style={{
       height: '0.72em',
@@ -295,14 +296,71 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({
       );
 
     case 'function': {
+      if (node.name === 'integral') {
+        return (
+          <span className="inline-flex items-center">
+            <span className="font-serif font-normal text-slate-900 text-[1.15em] mr-0.5 select-none leading-none">∫</span>
+            <span className="text-slate-700 font-normal">(</span>
+            <span 
+              className="inline-flex items-center min-w-[6px]"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSetCursor({
+                  steps: [...steps, { nodeId: node.id, slot: 'args' }],
+                  index: node.args.length,
+                });
+              }}
+            >
+              <SequenceRenderer
+                sequence={node.args}
+                steps={[...steps, { nodeId: node.id, slot: 'args' }]}
+                cursor={cursor}
+                onSetCursor={onSetCursor}
+                depth={depth}
+              />
+            </span>
+            <span className="text-slate-700 font-normal">)</span>
+            <span className="font-serif italic font-bold text-slate-900 ml-0.5 select-none text-[0.9em]">dx</span>
+          </span>
+        );
+      }
+
+      if (node.name === 'diff') {
+        return (
+          <span className="inline-flex items-center">
+            <span className="font-mono text-slate-900 mr-0.5 select-none text-[0.95em] tracking-tight">
+              <span className="italic font-serif">d</span>/<span className="italic font-serif">dx</span>
+            </span>
+            <span className="text-slate-700 font-normal">(</span>
+            <span 
+              className="inline-flex items-center min-w-[6px]"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSetCursor({
+                  steps: [...steps, { nodeId: node.id, slot: 'args' }],
+                  index: node.args.length,
+                });
+              }}
+            >
+              <SequenceRenderer
+                sequence={node.args}
+                steps={[...steps, { nodeId: node.id, slot: 'args' }]}
+                cursor={cursor}
+                onSetCursor={onSetCursor}
+                depth={depth}
+              />
+            </span>
+            <span className="text-slate-700 font-normal">)</span>
+          </span>
+        );
+      }
+
       let displayName = node.name;
       if (node.name === 'log10') displayName = 'log';
       else if (node.name === 'asin') displayName = 'sin⁻¹';
       else if (node.name === 'acos') displayName = 'cos⁻¹';
       else if (node.name === 'atan') displayName = 'tan⁻¹';
-      else if (node.name === 'diff') displayName = 'd/dx';
       else if (node.name === 'sigma') displayName = '∑';
-      else if (node.name === 'integral') displayName = '∫';
       else if (node.name === 'factor') displayName = 'Factor';
 
       return (
@@ -310,7 +368,7 @@ const NodeRenderer: React.FC<NodeRendererProps> = ({
           <span className="font-normal italic text-slate-800 mr-0.5">{displayName}</span>
           <span className="text-slate-700">(</span>
           <span 
-            className="inline-flex items-center"
+            className="inline-flex items-center min-w-[6px]"
             onClick={(e) => {
               e.stopPropagation();
               onSetCursor({

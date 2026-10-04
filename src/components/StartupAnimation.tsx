@@ -20,14 +20,10 @@ export const StartupAnimation: React.FC<StartupAnimationProps> = ({
   const [scrambleChars, setScrambleChars] = useState<string[]>([]);
   const [bracketChar, setBracketChar] = useState('∂');
   const [isFading, setIsFading] = useState(false);
-  const [hasStarted, setHasStarted] = useState(false);
 
   // Progressive letter lock-in effect with moving symbols for remaining characters:
   // e.g. "I" + rest moving -> "IN" + rest moving -> "INI" + rest moving ... up to "INITIALISING"
   useEffect(() => {
-    // Fade in on mount
-    const startTimer = setTimeout(() => setHasStarted(true), 25);
-
     // Continuous scrambler for the remaining positions
     const scrambleInterval = setInterval(() => {
       setScrambleChars(() => {
@@ -47,27 +43,27 @@ export const StartupAnimation: React.FC<StartupAnimationProps> = ({
 
       if (letterIndex >= targetWord.length) {
         clearInterval(stepInterval);
-        // Pause briefly on complete "INITIALISING" before fading out
+        // Pause briefly on complete "INITIALISING" before smoothly revealing the calculator
         setTimeout(() => {
           clearInterval(scrambleInterval);
           setIsFading(true);
           setTimeout(() => {
             onComplete();
-          }, 400);
+          }, 450);
         }, 500);
       }
     }, 110);
 
     return () => {
-      clearTimeout(startTimer);
       clearInterval(scrambleInterval);
       clearInterval(stepInterval);
     };
   }, [onComplete, targetWord.length]);
 
   const handleSkip = () => {
+    if (isFading) return;
     setIsFading(true);
-    setTimeout(onComplete, 200);
+    setTimeout(onComplete, 250);
   };
 
   // Construct the display string: locked letters + moving randomized symbols
@@ -82,22 +78,21 @@ export const StartupAnimation: React.FC<StartupAnimationProps> = ({
     <div 
       onClick={handleSkip}
       title="Tap anywhere to skip"
-      className={`fixed inset-0 z-50 bg-[#000000] text-slate-100 flex flex-col items-center justify-center select-none transition-all duration-400 cursor-pointer ${
+      className={`fixed inset-0 z-50 bg-[#000000] text-slate-100 flex flex-col items-center justify-center select-none cursor-pointer transition-opacity duration-500 ease-out ${
         isFading 
-          ? 'opacity-0 scale-[1.02] pointer-events-none' 
-          : hasStarted 
-            ? 'opacity-100 scale-100' 
-            : 'opacity-0 scale-98'
+          ? 'opacity-0 pointer-events-none' 
+          : 'opacity-100'
       }`}
+      style={{ backgroundColor: '#000000' }}
     >
       <div className="flex flex-col items-center justify-center max-w-sm px-6 text-center space-y-6">
-        {/* Brand header: older layout with same font-oryno-bold as the calculator */}
+        {/* Brand header */}
         <div className="text-slate-200 text-[14px] sm:text-[16px] tracking-widest uppercase font-oryno-bold font-bold drop-shadow-sm">
           {brandTitle}
         </div>
 
-        {/* Dynamic prompt: reduced initializing font size a bit as requested */}
-        <div className="text-[#68d391] text-base sm:text-lg font-mono tracking-wider font-semibold min-h-[34px] flex items-center justify-center bg-black/60 px-3.5 py-1.5 rounded-lg border border-emerald-500/25 shadow-[0_0_20px_rgba(104,211,145,0.15)]">
+        {/* Dynamic prompt */}
+        <div className="text-[#68d391] text-base sm:text-lg font-mono tracking-wider font-semibold min-h-[34px] flex items-center justify-center bg-black px-3.5 py-1.5 rounded-lg border border-emerald-500/25 shadow-[0_0_20px_rgba(104,211,145,0.15)]">
           <span>
             &gt; {renderedPrompt()}
             <span className="text-emerald-400 inline-block animate-pulse ml-1 font-bold">_</span>

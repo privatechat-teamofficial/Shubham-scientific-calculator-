@@ -55,7 +55,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 Calculator Settings
               </span>
               <span className="text-[10px] text-amber-400/90 font-mono">
-                ClassWiz mathematical preferences
+                SHUBHAM mathematical preferences
               </span>
             </div>
           </div>

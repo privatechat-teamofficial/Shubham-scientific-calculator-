@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { CursorPath, MathSequence } from '../lib/ast/types';
 import { MathRenderer } from './MathEditor/MathRenderer';
 import { ResultView } from './MathEditor/ResultView';
@@ -27,9 +27,47 @@ export const NaturalDisplay: React.FC<NaturalDisplayProps> = ({
   onKeyDown,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const hiddenInputRef = useRef<HTMLInputElement>(null);
 
   const isEmpty = ast.length === 0;
+
+  // Auto-scroll horizontally & vertically to always keep the active cursor and newly entered text in view
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      if (!scrollContainerRef.current) return;
+      const container = scrollContainerRef.current;
+      const cursorEl = container.querySelector('[data-math-cursor="true"]') as HTMLElement | null;
+      if (!cursorEl) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const cursorRect = cursorEl.getBoundingClientRect();
+
+      // Horizontal auto-scroll with comfortable margin
+      const diffRight = cursorRect.right - (containerRect.right - 28);
+      if (diffRight > 0) {
+        container.scrollLeft += diffRight;
+      } else {
+        const diffLeft = (containerRect.left + 28) - cursorRect.left;
+        if (diffLeft > 0) {
+          container.scrollLeft -= diffLeft;
+        }
+      }
+
+      // Vertical auto-scroll for tall nested structures (fractions, exponents)
+      const diffBottom = cursorRect.bottom - (containerRect.bottom - 10);
+      if (diffBottom > 0) {
+        container.scrollTop += diffBottom;
+      } else {
+        const diffTop = (containerRect.top + 10) - cursorRect.top;
+        if (diffTop > 0) {
+          container.scrollTop -= diffTop;
+        }
+      }
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [ast, cursor, fontSize]);
 
   // Keep focus on hidden input for hardware keyboard input
   const handleContainerClick = () => {
@@ -64,7 +102,10 @@ export const NaturalDisplay: React.FC<NaturalDisplayProps> = ({
         {/* Top Expression Area (Locked height container with internal multi-directional scroll) */}
         <div className="w-full flex-1 flex flex-col justify-start z-10 min-h-0 overflow-hidden font-oryno-bold pt-0.5">
           {/* Mathematical Expression with smooth horizontal & vertical scroll */}
-          <div className="math-scroll-container w-full flex-1 overflow-x-auto overflow-y-auto pr-3 py-0.5 scroll-smooth">
+          <div 
+            ref={scrollContainerRef}
+            className="math-scroll-container w-full flex-1 overflow-x-auto overflow-y-auto pr-3 py-0.5 scroll-smooth"
+          >
             <div className="flex items-center min-w-0 pr-1">
               <MathRenderer
                 sequence={ast}

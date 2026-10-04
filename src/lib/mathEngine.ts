@@ -161,7 +161,339 @@ export function preprocessExpression(expr: string, angleUnit: AngleUnit, vars: V
   // nCr(n, r) -> combinations(n, r)
   e = e.replace(/nCr\(([^,]+),([^)]+)\)/g, 'nCr($1, $2)');
 
+  // Evaluate special calculus functions (integral, diff, sigma, limit) before mathjs compilation
+  e = evaluateSpecialCalculusCalls(e, angleUnit, vars);
+
   return e;
+}
+
+/**
+ * Splits comma-separated arguments at the top parenthesis depth level
+ */
+function splitTopLevelArgs(argsStr: string): string[] {
+  const args: string[] = [];
+  let current = '';
+  let depth = 0;
+  for (let i = 0; i < argsStr.length; i++) {
+    const ch = argsStr[i];
+    if (ch === '(' || ch === '[' || ch === '{') {
+      depth++;
+      current += ch;
+    } else if (ch === ')' || ch === ']' || ch === '}') {
+      depth = Math.max(0, depth - 1);
+      current += ch;
+    } else if (ch === ',' && depth === 0) {
+      args.push(current.trim());
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  if (current.trim()) {
+    args.push(current.trim());
+  }
+  return args;
+}
+
+/**
+ * Simple preprocessor for expression evaluation in sub-functions (calculus engine)
+ */
+function preprocessSimple(expr: string, angleUnit: AngleUnit, _vars?: Partial<VariableMap> | Record<string, any>): string {
+  let e = expr.trim();
+  if (!e) return '0';
+
+  // Replace unicode symbols
+  e = e.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/π/g, 'pi');
+
+  // Convert trig functions to respect angleUnit
+  if (angleUnit === 'DEG') {
+    e = e.replace(/\bsin\(([^)]+)\)/g, 'sin(($1) * pi / 180)');
+    e = e.replace(/\bcos\(([^)]+)\)/g, 'cos(($1) * pi / 180)');
+    e = e.replace(/\btan\(([^)]+)\)/g, 'tan(($1) * pi / 180)');
+    e = e.replace(/\basin\(([^)]+)\)/g, '(asin($1) * 180 / pi)');
+    e = e.replace(/\bacos\(([^)]+)\)/g, '(acos($1) * 180 / pi)');
+    e = e.replace(/\batan\(([^)]+)\)/g, '(atan($1) * 200 / pi)');
+  } else if (angleUnit === 'GRAD') {
+    e = e.replace(/\bsin\(([^)]+)\)/g, 'sin(($1) * pi / 200)');
+    e = e.replace(/\bcos\(([^)]+)\)/g, 'cos(($1) * pi / 200)');
+    e = e.replace(/\btan\(([^)]+)\)/g, 'tan(($1) * pi / 200)');
+    e = e.replace(/\basin\(([^)]+)\)/g, '(asin($1) * 200 / pi)');
+    e = e.replace(/\bacos\(([^)]+)\)/g, '(acos($1) * 200 / pi)');
+    e = e.replace(/\batan\(([^)]+)\)/g, '(atan($1) * 200 / pi)');
+  }
+
+  // Handle implicit multiplication like 2x, 3x^2, 4(x+1)
+  e = e.replace(/(\d)\s*([a-zA-Z])/g, '$1 * $2');
+  e = e.replace(/(\d)\s*\(/g, '$1 * (');
+  e = e.replace(/\)\s*\(/g, ') * (');
+  e = e.replace(/\)\s*(\d)/g, ') * $1');
+  e = e.replace(/\)\s*([a-zA-Z])/g, ') * $1');
+
+  // standard log(x) on calculator is base 10!
+  e = e.replace(/\blog10\(([^)]+)\)/g, 'log10($1)');
+  e = e.replace(/\blog\(([^,)]+)\)/g, 'log10($1)');
+
+  return e;
+}
+
+/**
+ * Safely evaluates a numeric limit or bound argument
+ */
+function evaluateBound(expr: string, angleUnit: AngleUnit, vars: VariableMap): number {
+  const clean = expr.trim();
+  if (!clean) return 0;
+  try {
+    const processed = preprocessSimple(clean, angleUnit, vars);
+    const scope = {
+      ...vars,
+      pi: Math.PI,
+      e: Math.E,
+      Ans: vars.Ans || 0,
+    };
+    const res = math.evaluate(processed, scope);
+    return typeof res === 'number' ? res : (res && res.toNumber ? res.toNumber() : Number(res));
+  } catch {
+    const num = Number(clean);
+    return isNaN(num) ? 0 : num;
+  }
+}
+
+/**
+ * Computes definite integral using Composite Simpson's 1/3 Rule
+ * \int_{a}^{b} f(x) dx
+ */
+export function computeDefiniteIntegral(
+  fnStr: string,
+  a: number,
+  b: number,
+  angleUnit: AngleUnit = 'DEG',
+  vars: VariableMap = initialVariables,
+  n: number = 300
+): number {
+  if (a === b) return 0;
+  // Ensure n is even for Simpson's 1/3 rule
+  if (n % 2 !== 0) n += 1;
+
+  const evalAt = (xVal: number): number => {
+    try {
+      const scope: Record<string, any> = {
+        ...vars,
+        x: xVal,
+        X: xVal,
+        pi: Math.PI,
+        e: Math.E,
+        Ans: vars.Ans || 0,
+      };
+      const processed = preprocessSimple(fnStr, angleUnit, scope);
+      const res = math.evaluate(processed, scope);
+      const num = typeof res === 'number' ? res : (res && res.toNumber ? res.toNumber() : Number(res));
+      return isFinite(num) && !isNaN(num) ? num : 0;
+    } catch {
+      return 0;
+    }
+  };
+
+  const h = (b - a) / n;
+  let sum = evalAt(a) + evalAt(b);
+
+  for (let i = 1; i < n; i++) {
+    const x = a + i * h;
+    sum += (i % 2 === 0 ? 2 : 4) * evalAt(x);
+  }
+
+  const result = (sum * h) / 3;
+
+  // Clean rounding of close floating point artifacts (e.g. 9.000000000000002 -> 9)
+  const rounded = Math.round(result * 1e8) / 1e8;
+  if (Math.abs(result - rounded) < 1e-7) {
+    return rounded;
+  }
+  return result;
+}
+
+/**
+ * Computes numerical derivative d/dx f(x) at x = atX
+ */
+export function computeDerivative(
+  fnStr: string,
+  atX: number,
+  angleUnit: AngleUnit = 'DEG',
+  vars: VariableMap = initialVariables
+): number {
+  const evalAt = (xVal: number): number => {
+    try {
+      const scope: Record<string, any> = {
+        ...vars,
+        x: xVal,
+        X: xVal,
+        pi: Math.PI,
+        e: Math.E,
+        Ans: vars.Ans || 0,
+      };
+      const processed = preprocessSimple(fnStr, angleUnit, scope);
+      const res = math.evaluate(processed, scope);
+      const num = typeof res === 'number' ? res : (res && res.toNumber ? res.toNumber() : Number(res));
+      return isFinite(num) && !isNaN(num) ? num : 0;
+    } catch {
+      return 0;
+    }
+  };
+
+  const h = 1e-6;
+  const f1 = evalAt(atX + h);
+  const f2 = evalAt(atX - h);
+  const diffVal = (f1 - f2) / (2 * h);
+
+  const rounded = Math.round(diffVal * 1e8) / 1e8;
+  if (Math.abs(diffVal - rounded) < 1e-7) {
+    return rounded;
+  }
+  return diffVal;
+}
+
+/**
+ * Computes finite summation \sum_{x=start}^{end} f(x)
+ */
+export function computeSummation(
+  fnStr: string,
+  start: number,
+  end: number,
+  angleUnit: AngleUnit = 'DEG',
+  vars: VariableMap = initialVariables
+): number {
+  let sum = 0;
+  const s = Math.round(start);
+  const e = Math.round(end);
+  for (let x = s; x <= e; x++) {
+    try {
+      const scope: Record<string, any> = {
+        ...vars,
+        x,
+        X: x,
+        pi: Math.PI,
+        e: Math.E,
+        Ans: vars.Ans || 0,
+      };
+      const processed = preprocessSimple(fnStr, angleUnit, scope);
+      const res = math.evaluate(processed, scope);
+      const num = typeof res === 'number' ? res : (res && res.toNumber ? res.toNumber() : Number(res));
+      if (isFinite(num) && !isNaN(num)) {
+        sum += num;
+      }
+    } catch {
+      // ignore term error
+    }
+  }
+  return sum;
+}
+
+/**
+ * Computes limit \lim_{x \to c} f(x)
+ */
+export function computeLimit(
+  fnStr: string,
+  c: number,
+  angleUnit: AngleUnit = 'DEG',
+  vars: VariableMap = initialVariables
+): number {
+  const evalAt = (xVal: number): number => {
+    try {
+      const scope: Record<string, any> = {
+        ...vars,
+        x: xVal,
+        X: xVal,
+        pi: Math.PI,
+        e: Math.E,
+        Ans: vars.Ans || 0,
+      };
+      const processed = preprocessSimple(fnStr, angleUnit, scope);
+      const res = math.evaluate(processed, scope);
+      return typeof res === 'number' ? res : (res && res.toNumber ? res.toNumber() : Number(res));
+    } catch {
+      return NaN;
+    }
+  };
+
+  const h = 1e-6;
+  const yRight = evalAt(c + h);
+  const yLeft = evalAt(c - h);
+  if (!isNaN(yRight) && !isNaN(yLeft)) {
+    const val = (yRight + yLeft) / 2;
+    const rounded = Math.round(val * 1e8) / 1e8;
+    return Math.abs(val - rounded) < 1e-7 ? rounded : val;
+  }
+  if (!isNaN(yRight)) return yRight;
+  if (!isNaN(yLeft)) return yLeft;
+  return 0;
+}
+
+/**
+ * Evaluates special functions like integral(fn, a, b), diff(fn, x), sigma(fn, start, end), limit(fn, c)
+ */
+function evaluateSpecialCalculusCalls(expr: string, angleUnit: AngleUnit, vars: VariableMap): string {
+  const fnNames = ['integral', 'diff', 'sigma', 'limit'];
+  let modified = expr;
+
+  for (const fnName of fnNames) {
+    let searchIdx = 0;
+    while (true) {
+      const fnCallStart = modified.indexOf(fnName + '(', searchIdx);
+      if (fnCallStart === -1) break;
+
+      const openParenIdx = fnCallStart + fnName.length;
+      let depth = 1;
+      let closeParenIdx = -1;
+
+      for (let i = openParenIdx + 1; i < modified.length; i++) {
+        if (modified[i] === '(') depth++;
+        else if (modified[i] === ')') {
+          depth--;
+          if (depth === 0) {
+            closeParenIdx = i;
+            break;
+          }
+        }
+      }
+
+      if (closeParenIdx === -1) {
+        closeParenIdx = modified.length;
+      }
+
+      const argsContent = modified.slice(openParenIdx + 1, closeParenIdx);
+      const args = splitTopLevelArgs(argsContent);
+
+      let computedValue = 0;
+      try {
+        if (fnName === 'integral') {
+          const fnStr = args[0] || 'x';
+          const a = args[1] !== undefined ? evaluateBound(args[1], angleUnit, vars) : 0;
+          const b = args[2] !== undefined ? evaluateBound(args[2], angleUnit, vars) : 1;
+          computedValue = computeDefiniteIntegral(fnStr, a, b, angleUnit, vars);
+        } else if (fnName === 'diff') {
+          const fnStr = args[0] || 'x';
+          const atX = args[1] !== undefined ? evaluateBound(args[1], angleUnit, vars) : 0;
+          computedValue = computeDerivative(fnStr, atX, angleUnit, vars);
+        } else if (fnName === 'sigma') {
+          const fnStr = args[0] || 'x';
+          const start = args[1] !== undefined ? Math.round(evaluateBound(args[1], angleUnit, vars)) : 1;
+          const end = args[2] !== undefined ? Math.round(evaluateBound(args[2], angleUnit, vars)) : 10;
+          computedValue = computeSummation(fnStr, start, end, angleUnit, vars);
+        } else if (fnName === 'limit') {
+          const fnStr = args[0] || 'x';
+          const c = args[1] !== undefined ? evaluateBound(args[1], angleUnit, vars) : 0;
+          computedValue = computeLimit(fnStr, c, angleUnit, vars);
+        }
+      } catch {
+        computedValue = 0;
+      }
+
+      const replacement = `(${computedValue})`;
+      modified = modified.slice(0, fnCallStart) + replacement + modified.slice(closeParenIdx + 1);
+      searchIdx = fnCallStart + replacement.length;
+    }
+  }
+
+  return modified;
 }
 
 /**
@@ -391,7 +723,7 @@ export function evaluateMath(
         latexStr = `\\frac{${frac.n}}{${frac.d}}`;
       }
 
-      // Decimal formatted to standard ClassWiz precision (up to 10 significant digits, trim trailing zeros)
+      // Decimal formatted to standard SHUBHAM precision (up to 10 significant digits, trim trailing zeros)
       let decStr = num.toString();
       if (Math.abs(num) > 0 && (Math.abs(num) < 1e-6 || Math.abs(num) >= 1e10)) {
         decStr = num.toExponential(8).replace(/\.?0+e/, 'e');

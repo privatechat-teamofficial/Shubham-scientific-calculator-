@@ -1,7 +1,6 @@
 import React from 'react';
 import { 
   History, 
-  TrendingUp, 
   MoreVertical, 
 } from 'lucide-react';
 import { AngleUnit } from '../types';
@@ -12,7 +11,6 @@ interface HeaderProps {
   onOpenHistory: () => void;
   onOpenVariables?: () => void;
   onOpenCamera?: () => void;
-  onOpenGraph: () => void;
   onOpenSettings: () => void;
   onOpenSolver?: () => void;
   onOpenHelp?: () => void;
@@ -25,10 +23,9 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenHistory,
   onOpenVariables: _onOpenVariables,
   onOpenCamera: _onOpenCamera,
-  onOpenGraph,
   onOpenSettings,
   onOpenSolver: _onOpenSolver,
-  onOpenHelp: _onOpenHelp,
+  onOpenHelp: _onHelp,
   historyCount,
 }) => {
   return (
@@ -49,7 +46,7 @@ export const Header: React.FC<HeaderProps> = ({
         </span>
       </div>
 
-      {/* Top action icons sized proportionately to the brand badge */}
+      {/* Top action icons */}
       <div className="flex items-center gap-1.5">
         {/* Angle Unit Badge / Toggle */}
         {angleUnit && onCycleAngleUnit && (
@@ -74,16 +71,6 @@ export const Header: React.FC<HeaderProps> = ({
           {historyCount > 0 && (
             <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-amber-400 ring-1 ring-black"></span>
           )}
-        </button>
-
-        {/* Graph Plotter */}
-        <button
-          id="btn-open-graph"
-          onClick={onOpenGraph}
-          title="2D Function Graph Plotter"
-          className="p-1.5 rounded-lg bg-[#18181b] text-slate-200 hover:text-amber-300 hover:bg-[#27272a] border border-neutral-800 active:scale-95 transition-all"
-        >
-          <TrendingUp className="w-[18px] h-[18px]" strokeWidth={2.4} />
         </button>
 
         {/* Settings / More Menu */}

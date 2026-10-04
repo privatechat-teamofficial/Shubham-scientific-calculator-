@@ -1043,7 +1043,25 @@ export function astToLatex(seq: MathSequence): string {
       }
       case 'function': {
         const args = astToLatex(node.args);
-        out += `\\${node.name}\\left(${args}\\right)`;
+        if (node.name === 'integral') {
+          out += `\\int\\left(${args}\\right)`;
+        } else if (node.name === 'diff') {
+          out += `\\frac{d}{dx}\\left(${args}\\right)`;
+        } else if (node.name === 'sigma') {
+          out += `\\sum\\left(${args}\\right)`;
+        } else if (node.name === 'limit') {
+          out += `\\lim\\left(${args}\\right)`;
+        } else if (node.name === 'log10') {
+          out += `\\log_{10}\\left(${args}\\right)`;
+        } else if (node.name === 'asin') {
+          out += `\\sin^{-1}\\left(${args}\\right)`;
+        } else if (node.name === 'acos') {
+          out += `\\cos^{-1}\\left(${args}\\right)`;
+        } else if (node.name === 'atan') {
+          out += `\\tan^{-1}\\left(${args}\\right)`;
+        } else {
+          out += `\\${node.name}\\left(${args}\\right)`;
+        }
         break;
       }
       case 'parentheses': {

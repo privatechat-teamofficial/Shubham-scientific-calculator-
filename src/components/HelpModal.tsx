@@ -25,7 +25,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
             </div>
             <div>
               <span className="font-bold text-white text-base font-oryno-bold block leading-tight">
-                ClassWiz Guide & Shortcuts
+                SHUBHAM Guide & Shortcuts
               </span>
               <span className="text-[10px] text-amber-400/90 font-mono">
                 How to use scientific features
@@ -55,7 +55,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
           <div className="p-3 rounded-xl bg-[#141416] border border-neutral-800">
             <h4 className="font-bold text-white text-sm mb-1 flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-[#7adf8c] shadow-xs shadow-emerald-400/50" />
-              ALPHA Mode (ClassWiz Mint Green)
+              ALPHA Mode (Mint Green)
             </h4>
             <p className="text-neutral-400 leading-relaxed">
               Press <span className="font-extrabold text-[#7adf8c]">ALPHA</span> to access stored algebraic variables (<span className="text-[#7adf8c] font-mono font-bold">A, B, C, D, E, F, X, Y, M</span>) and secondary operators.
